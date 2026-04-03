@@ -6,6 +6,10 @@ import {
   introTopics,
   ioDemo,
   learningModules,
+  mcpComparisons,
+  mcpExamples,
+  mcpFlowSteps,
+  mcpRealityNotes,
   searchApiNotes,
   searchSourceDemos,
   stagePills,
@@ -1850,10 +1854,75 @@ function App() {
                   </article>
                 </div>
               </>
-            ) : activeModule === "search" ? (
+            ) : activeModule === "mcp" ? (
               <>
                 <div className="lesson-head">
                   <p className="eyebrow">第五页</p>
+                  <h1>MCP</h1>
+                  <p>
+                    这一页先把一个常见误区拆开。Function Calling 讲的是“模型怎样决定调用工具”，MCP 讲的是“工具怎样被接进系统并暴露给模型”。
+                  </p>
+                </div>
+
+                <div className="mcp-compare-grid">
+                  {mcpComparisons.map((item) => (
+                    <article className="compare-card" key={item.title}>
+                      <span className="panel-label">{item.title}</span>
+                      <p className="compare-title">{item.title === "Function Calling" ? "模型侧调用格式" : "系统侧接入协议"}</p>
+                      <p>{item.body}</p>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="system-intro-card">
+                  <span className="panel-label">一句话区别</span>
+                  <h2>Function Calling 解决“怎么调”，MCP 解决“怎么接”</h2>
+                  <p>
+                    模型先用 function/tool schema 表达“我要调用哪个工具”；而 MCP 负责把这些工具通过统一协议挂到客户端上，让客户端知道去哪个 server 执行。
+                  </p>
+                </div>
+
+                <div className="mcp-flow-grid">
+                  {mcpFlowSteps.map((step) => (
+                    <article className="mcp-step-card" key={step.label}>
+                      <span className="panel-label">{step.label}</span>
+                      <h3>{step.title}</h3>
+                      <p>{step.body}</p>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="provider-grid">
+                  {mcpExamples.map((item) => (
+                    <article className="topic-card" key={item.title}>
+                      <span className="panel-label">MCP 示例</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.body}</p>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="io-insights">
+                  <article className="insight-card">
+                    <span className="panel-label">现实限制</span>
+                    {mcpRealityNotes.map((note) => (
+                      <p className="mcp-note" key={note}>
+                        {note}
+                      </p>
+                    ))}
+                  </article>
+                  <article className="insight-card">
+                    <span className="panel-label">这一页的重点</span>
+                    <p>
+                      以后你在 Agent 里看到“模型调用工具”，先别急着把 MCP 和 Function Calling 混成一个词。一个更像调用格式，一个更像接入层基础设施。
+                    </p>
+                  </article>
+                </div>
+              </>
+            ) : activeModule === "search" ? (
+              <>
+                <div className="lesson-head">
+                  <p className="eyebrow">第六页</p>
                   <h1>搜索</h1>
                   <p>
                     模型并不天然知道最新网页信息，所以很多时候要先走搜索。受限于纯前端、免 key 这组条件，这一页只展示 4 类公开可接的搜索源；真正的通用搜索更接近百度、必应这类实时搜索引擎，覆盖更广、效果也通常更好。
@@ -2127,8 +2196,8 @@ function App() {
           <p className="eyebrow">从 Prompt 到 ReAct</p>
           <h1>先把 AI 入门部分，一次看明白。</h1>
           <p className="hero-text">
-            提示词、系统提示词、输出、结构化输出、Function Calling、搜索、ReAct 循环。
-            先把这 6 个点讲透，再往后走。
+            提示词、系统提示词、输出、结构化输出、Function Calling、MCP、搜索、ReAct 循环。
+            先把这 7 个点讲透，再往后走。
           </p>
 
           <div className="hero-actions">
@@ -2163,7 +2232,7 @@ function App() {
         <section className="section" id="topics">
           <div className="section-heading">
             <p className="eyebrow">入门目录</p>
-            <h2>这一阶段先学这 6 个点。</h2>
+            <h2>这一阶段先学这 7 个点。</h2>
           </div>
 
           <div className="topic-grid">

@@ -3,8 +3,9 @@ export const introTopics = [
   { index: "02", title: "系统提示词", body: "再看角色、目标和边界怎样影响回答。" },
   { index: "03", title: "结构化输出", body: "再把回答从“能看”变成“能编程”。" },
   { index: "04", title: "Function Calling", body: "模型怎样决定调用外部函数。" },
-  { index: "05", title: "搜索", body: "为什么需要搜索，以及搜索请求怎样发出、返回、回填。" },
-  { index: "06", title: "ReAct 循环", body: "推理、行动、观察，Agent 从这里开始。" },
+  { index: "05", title: "MCP", body: "工具不是凭空出现的，MCP 讲的是工具怎样被接进系统。" },
+  { index: "06", title: "搜索", body: "为什么需要搜索，以及搜索请求怎样发出、返回、回填。" },
+  { index: "07", title: "ReAct 循环", body: "推理、行动、观察，Agent 从这里开始。" },
 ];
 
 export const stagePills = ["提示词", "系统提示词", "输出", "结构化输出", "Function Calling", "搜索", "ReAct"];
@@ -37,8 +38,69 @@ export const learningModules = [
   { id: "system", title: "系统提示词", subtitle: "角色、目标、边界" },
   { id: "structured", title: "结构化输出", subtitle: "JSON 与可编程结果" },
   { id: "function", title: "Function Calling", subtitle: "函数调用与参数" },
+  { id: "mcp", title: "MCP", subtitle: "工具如何接入系统" },
   { id: "search", title: "搜索", subtitle: "搜索为什么重要，以及请求怎样流转" },
   { id: "react", title: "ReAct 循环", subtitle: "Thought / Act / Observation" },
+];
+
+export const mcpComparisons = [
+  {
+    title: "Function Calling",
+    body: "它解决的是“模型如何表达自己要调用哪个工具”。重点是工具 schema、参数生成、函数返回值和后续回答。",
+  },
+  {
+    title: "MCP",
+    body: "它解决的是“工具如何被接进来并暴露给模型”。重点是客户端、MCP server、协议、工具清单和执行链路。",
+  },
+];
+
+export const mcpFlowSteps = [
+  {
+    label: "01 用户提出问题",
+    title: "用户先说需求",
+    body: "例如“帮我搜索一下本周 AI 新闻”或“去 GitHub 查这个仓库最近的 issue”。",
+  },
+  {
+    label: "02 模型决定调用工具",
+    title: "模型通过 tool / function schema 表达调用意图",
+    body: "这一步还是 Function Calling 的世界：模型先说“我要调用哪个工具，要传什么参数”。",
+  },
+  {
+    label: "03 客户端接住调用",
+    title: "客户端发现这个工具来自某个 MCP server",
+    body: "客户端不会自己做搜索或读 GitHub，而是根据工具归属，把请求转交给对应的 MCP server。",
+  },
+  {
+    label: "04 MCP server 真正执行",
+    title: "Server 负责跑工具",
+    body: "MCP server 里可能封装了搜索、文件、数据库、GitHub、浏览器等真实能力，它会拿参数去执行。",
+  },
+  {
+    label: "05 结果返回模型",
+    title: "执行结果再回到模型",
+    body: "模型拿到工具结果后，才继续组织自然语言回答、生成下一步计划，或再次调用别的工具。",
+  },
+];
+
+export const mcpExamples = [
+  {
+    title: "搜索 MCP",
+    body: "把搜索能力做成一个独立 server，客户端连上以后，模型就能调用 web_search 这类工具。",
+  },
+  {
+    title: "GitHub MCP",
+    body: "把 issue、PR、文件读取等能力封装成 MCP 工具，让模型去查仓库状态，而不是靠记忆瞎猜。",
+  },
+  {
+    title: "本地文件 / 数据库 MCP",
+    body: "把本地文件、SQLite、向量库、业务系统等都接成统一协议下的工具入口。",
+  },
+];
+
+export const mcpRealityNotes = [
+  "纯前端静态站可以很好地讲清 MCP 是什么，但通常不能直接跑标准本地 stdio 型 MCP server。",
+  "真正运行 MCP 往往需要桌面客户端、Node/Python runtime，或者一个远程 MCP 服务。",
+  "所以这页重点先放在“理解接入层”，而不是强行在 GitHub Pages 里模拟完整本地 MCP 执行。",
 ];
 
 export const ioDemo = {

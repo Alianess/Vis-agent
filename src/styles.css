@@ -379,6 +379,8 @@ code {
 .structured-inputs,
 .function-shell,
 .function-compare-grid,
+.mcp-compare-grid,
+.mcp-flow-grid,
 .search-shell,
 .provider-grid,
 .search-related-grid,
@@ -440,6 +442,16 @@ code {
   margin-top: 18px;
 }
 
+.mcp-compare-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 22px;
+}
+
+.mcp-flow-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 20px;
+}
+
 .provider-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 20px;
@@ -469,6 +481,7 @@ code {
 .search-summary-card,
 .search-item-card,
 .search-request-card,
+.mcp-step-card,
 .placeholder-panel {
   padding: 22px;
   border-radius: 28px;
@@ -643,6 +656,30 @@ code {
   white-space: pre-wrap;
   color: var(--ink);
   line-height: 1.7;
+}
+
+.mcp-step-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.mcp-step-card h3 {
+  margin: 14px 0 10px;
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.mcp-step-card p,
+.mcp-note {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.mcp-note + .mcp-note {
+  margin-top: 10px;
 }
 
 .search-control-card,
@@ -1277,6 +1314,8 @@ code {
   .structured-shell,
   .function-shell,
   .function-compare-grid,
+  .mcp-compare-grid,
+  .mcp-flow-grid,
   .search-shell,
   .provider-grid,
   .search-related-grid {
