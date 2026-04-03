@@ -7,6 +7,7 @@ import {
   ioDemo,
   learningModules,
   searchApiNotes,
+  searchSourceDemos,
   stagePills,
   structuredOutputDemo,
   systemPromptDemos,
@@ -40,6 +41,14 @@ type SearchItem = {
   url?: string;
   source: string;
   score?: number;
+};
+
+type SearchSourceId = "wikipedia" | "github" | "arxiv" | "openlibrary";
+
+type SearchPayload = {
+  featured?: SearchItem;
+  items: SearchItem[];
+  requestPreview: string;
 };
 
 type WikipediaSearchResponse = {
@@ -231,6 +240,140 @@ async function fetchWikipediaSearchItems(query: string, limit = 5): Promise<Sear
   return [];
 }
 
+async function searchWikipedia(query: string, limit: number): Promise<SearchPayload> {
+  const [items, summary] = await Promise.all([
+    fetchWikipediaSearchItems(query, limit),
+    fetchWikipediaSummary(query),
+  ]);
+
+  const featured = summary
+    ? {
+        title: summary.title,
+        text: summary.summary,
+        url: summary.url,
+        source: summary.sourceLabel,
+      }
+    : items[0];
+
+  return {
+    featured,
+    items: items.filter((item) => item.url !== featured?.url).slice(0, limit - 1),
+    requestPreview: `GET https://zh.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+      query,
+    )}&format=json&origin=*`,
+  };
+}
+
+async function searchGitHubRepositories(query: string, limit: number): Promise<SearchPayload> {
+  const params = new URLSearchParams({
+    q: query,
+    per_page: String(limit),
+    sort: "stars",
+    order: "desc",
+  });
+  const response = await fetch(`https://api.github.com/search/repositories?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("GitHub 搜索失败");
+  }
+
+  const data = (await response.json()) as {
+    items?: Array<{
+      full_name: string;
+      description?: string;
+      html_url: string;
+      language?: string;
+      stargazers_count?: number;
+    }>;
+  };
+
+  const items: SearchItem[] =
+    data.items?.map((item) => ({
+      title: item.full_name,
+      text: `${item.description || "暂无描述"}${item.language ? ` · ${item.language}` : ""}${
+        typeof item.stargazers_count === "number" ? ` · ${item.stargazers_count} stars` : ""
+      }`,
+      url: item.html_url,
+      source: "GitHub 仓库",
+    })) ?? [];
+
+  return {
+    featured: items[0],
+    items: items.slice(1),
+    requestPreview: `GET https://api.github.com/search/repositories?q=${encodeURIComponent(
+      query,
+    )}&per_page=${limit}&sort=stars&order=desc`,
+  };
+}
+
+async function searchArxiv(query: string, limit: number): Promise<SearchPayload> {
+  const url = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(
+    query,
+  )}&start=0&max_results=${limit}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("arXiv 搜索失败");
+  }
+
+  const xml = await response.text();
+  const doc = new DOMParser().parseFromString(xml, "text/xml");
+  const entries = Array.from(doc.getElementsByTagName("entry")).map((entry) => ({
+    title:
+      entry.getElementsByTagName("title")[0]?.textContent?.replace(/\s+/g, " ").trim() ||
+      "未命名论文",
+    text:
+      entry.getElementsByTagName("summary")[0]?.textContent?.replace(/\s+/g, " ").trim() ||
+      "暂无摘要",
+    url: entry.getElementsByTagName("id")[0]?.textContent?.trim() || "",
+    source: "arXiv 论文",
+  }));
+
+  return {
+    featured: entries[0],
+    items: entries.slice(1),
+    requestPreview: `GET https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(
+      query,
+    )}&start=0&max_results=${limit}`,
+  };
+}
+
+async function searchOpenLibrary(query: string, limit: number): Promise<SearchPayload> {
+  const params = new URLSearchParams({
+    q: query,
+    limit: String(limit),
+  });
+  const response = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Open Library 搜索失败");
+  }
+
+  const data = (await response.json()) as {
+    docs?: Array<{
+      title?: string;
+      author_name?: string[];
+      first_publish_year?: number;
+      key?: string;
+    }>;
+  };
+
+  const items: SearchItem[] =
+    data.docs?.map((item) => ({
+      title: item.title || "未命名图书",
+      text: `${item.author_name?.join(" / ") || "未知作者"}${
+        item.first_publish_year ? ` · ${item.first_publish_year}` : ""
+      }`,
+      url: item.key ? `https://openlibrary.org${item.key}` : undefined,
+      source: "Open Library",
+    })) ?? [];
+
+  return {
+    featured: items[0],
+    items: items.slice(1),
+    requestPreview: `GET https://openlibrary.org/search.json?q=${encodeURIComponent(
+      query,
+    )}&limit=${limit}`,
+  };
+}
+
 function buildLocalSearchItems(): SearchItem[] {
   return [
     ...introTopics.map((item) => ({
@@ -367,7 +510,10 @@ function App() {
     "typing" | "thinking" | "calling" | "result" | "answering" | "done"
   >("typing");
   const [isFunctionThinkCollapsed, setIsFunctionThinkCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("刘亦菲");
+  const [activeSearchSource, setActiveSearchSource] = useState<SearchSourceId>(
+    searchSourceDemos[0].id as SearchSourceId,
+  );
+  const [searchQuery, setSearchQuery] = useState(searchSourceDemos[0].defaultQuery);
   const [searchLimit, setSearchLimit] = useState(5);
   const [searchStatus, setSearchStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle",
@@ -378,6 +524,7 @@ function App() {
   const [searchSource, setSearchSource] = useState("");
   const [searchSourceLabel, setSearchSourceLabel] = useState("聚合搜索结果");
   const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
+  const [searchRequestPreview, setSearchRequestPreview] = useState("");
 
   useEffect(() => {
     const onHashChange = () => {
@@ -392,6 +539,8 @@ function App() {
     systemPromptDemos.find((preset) => preset.id === activeSystemPreset) ?? systemPromptDemos[0];
   const currentFunctionPreset =
     functionCallDemos.find((preset) => preset.id === activeFunctionPreset) ?? functionCallDemos[0];
+  const currentSearchSource =
+    searchSourceDemos.find((preset) => preset.id === activeSearchSource) ?? searchSourceDemos[0];
 
   useEffect(() => {
     if (route !== "learn" || activeModule !== "io") {
@@ -928,7 +1077,7 @@ function App() {
     setFunctionRunSeed((value) => value + 1);
   };
 
-  const runDuckDuckGoSearch = async (query = searchQuery) => {
+  const runSearch = async (query = searchQuery, source = activeSearchSource) => {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) {
       setSearchStatus("error");
@@ -938,6 +1087,7 @@ function App() {
       setSearchHeading("");
       setSearchSource("");
       setSearchSourceLabel("聚合搜索结果");
+      setSearchRequestPreview("");
       return;
     }
 
@@ -945,59 +1095,26 @@ function App() {
     setSearchError("");
 
     try {
-      const [duckduckgoData, wikipediaItems] = await Promise.all([
-        searchDuckDuckGoInstantAnswer(trimmedQuery),
-        fetchWikipediaSearchItems(trimmedQuery, Math.max(searchLimit, 5)),
-      ]);
+      let payload: SearchPayload;
 
-      const duckduckgoItems: SearchItem[] = [];
-      const summaryText =
-        duckduckgoData.AbstractText || duckduckgoData.Answer || duckduckgoData.Definition || "";
-      const summaryUrl = duckduckgoData.AbstractURL || duckduckgoData.DefinitionURL || "";
-
-      if (summaryText) {
-        duckduckgoItems.push({
-          title: duckduckgoData.Heading || trimmedQuery,
-          text: summaryText,
-          url: summaryUrl,
-          source: "网页答案源",
-        });
+      if (source === "wikipedia") {
+        payload = await searchWikipedia(trimmedQuery, searchLimit);
+      } else if (source === "github") {
+        payload = await searchGitHubRepositories(trimmedQuery, searchLimit);
+      } else if (source === "arxiv") {
+        payload = await searchArxiv(trimmedQuery, searchLimit);
+      } else {
+        payload = await searchOpenLibrary(trimmedQuery, searchLimit);
       }
 
-      duckduckgoItems.push(
-        ...flattenDuckDuckGoTopics([...(duckduckgoData.Results ?? []), ...(duckduckgoData.RelatedTopics ?? [])]),
-      );
-
-      const wikipediaFallback = !summaryText ? await fetchWikipediaSummary(trimmedQuery) : null;
-      const fallbackItems = wikipediaFallback
-        ? [
-            {
-              title: wikipediaFallback.title,
-              text: wikipediaFallback.summary,
-              url: wikipediaFallback.url,
-              source: wikipediaFallback.sourceLabel,
-            } satisfies SearchItem,
-          ]
-        : [];
-
-      const externalItems = [...duckduckgoItems, ...wikipediaItems, ...fallbackItems];
-      const backupItems = externalItems.length >= Math.max(2, searchLimit) ? [] : buildLocalSearchItems();
-
-      const ranked = rankSearchItems(trimmedQuery, [
-        ...externalItems,
-        ...backupItems,
-      ], searchLimit);
-
-      const featured = ranked[0];
+      const featured = payload.featured;
 
       setSearchHeading(featured?.title || trimmedQuery);
-      setSearchSummary(
-        featured?.text ||
-          "这次查询没有命中明显摘要，但你仍然可以打开正常搜索页继续查看网页结果。",
-      );
+      setSearchSummary(featured?.text || "这次查询没有命中明显结果，你可以换个关键词再试。");
       setSearchSource(featured?.url || "");
-      setSearchSourceLabel(featured?.source || "聚合搜索结果");
-      setSearchItems(ranked.slice(1));
+      setSearchSourceLabel(featured?.source || currentSearchSource.label);
+      setSearchItems(payload.items);
+      setSearchRequestPreview(payload.requestPreview);
       setSearchStatus("success");
     } catch (error) {
       setSearchStatus("error");
@@ -1007,17 +1124,36 @@ function App() {
       setSearchHeading("");
       setSearchSource("");
       setSearchSourceLabel("聚合搜索结果");
+      setSearchRequestPreview("");
     }
   };
 
-  const fullSearchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}`;
+  const fullSearchUrl =
+    activeSearchSource === "wikipedia"
+      ? `https://zh.wikipedia.org/w/index.php?search=${encodeURIComponent(searchQuery)}`
+      : activeSearchSource === "github"
+        ? `https://github.com/search?q=${encodeURIComponent(searchQuery)}`
+        : activeSearchSource === "arxiv"
+          ? `https://arxiv.org/search/?query=${encodeURIComponent(searchQuery)}&searchtype=all`
+          : `https://openlibrary.org/search?q=${encodeURIComponent(searchQuery)}`;
   const hasSearchContent = Boolean(searchSummary || searchSource || searchItems.length);
 
   useEffect(() => {
     if (route === "learn" && activeModule === "search" && searchStatus === "idle") {
-      void runDuckDuckGoSearch("刘亦菲");
+      void runSearch(currentSearchSource.defaultQuery, activeSearchSource);
     }
-  }, [route, activeModule, searchStatus]);
+  }, [route, activeModule, searchStatus, activeSearchSource, currentSearchSource.defaultQuery]);
+
+  useEffect(() => {
+    setSearchQuery(currentSearchSource.defaultQuery);
+    setSearchStatus("idle");
+    setSearchItems([]);
+    setSearchSummary("");
+    setSearchHeading("");
+    setSearchSource("");
+    setSearchSourceLabel("聚合搜索结果");
+    setSearchRequestPreview("");
+  }, [activeSearchSource, currentSearchSource.defaultQuery]);
 
   if (route === "learn") {
     return (
@@ -1720,19 +1856,40 @@ function App() {
                   <p className="eyebrow">第五页</p>
                   <h1>搜索</h1>
                   <p>
-                    模型并不天然知道最新网页信息，所以很多时候要先走搜索。这一页会用一个前端可运行的展示版聚合搜索器，带你看搜索结果是怎样被拿回来、再被重新组织的。
+                    模型并不天然知道最新网页信息，所以很多时候要先走搜索。受限于纯前端、免 key 这组条件，这一页只展示 4 类公开可接的搜索源；真正的通用搜索更接近百度、必应这类实时搜索引擎，覆盖更广、效果也通常更好。
                   </p>
+                </div>
+
+                <div className="preset-switcher" role="tablist" aria-label="搜索来源示例">
+                  {searchSourceDemos.map((source) => (
+                    <button
+                      aria-selected={activeSearchSource === source.id}
+                      className={`preset-chip ${activeSearchSource === source.id ? "is-active" : ""}`}
+                      key={source.id}
+                      onClick={() => setActiveSearchSource(source.id as SearchSourceId)}
+                      role="tab"
+                      type="button"
+                    >
+                      {source.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="system-intro-card">
+                  <span className="panel-label">当前来源</span>
+                  <h2>{currentSearchSource.title}</h2>
+                  <p>{currentSearchSource.subtitle}</p>
                 </div>
 
                 <div className="function-compare-grid">
                   <article className="compare-card">
                     <span className="panel-label">这一页在演示什么</span>
-                    <p className="compare-title">这是一个“手搓展示版搜索器”：前端会参考多种来源，再按关键词匹配做 TopK</p>
+                    <p className="compare-title">这 4 个来源都能纯前端直连，但它们搜索的不是同一个世界</p>
                     <p>
-                      这页的目标不是复刻完整搜索引擎，而是让你直观看到“搜索源可以有很多个，结果还可以被重新排序”。所以它会参考网页答案源、Wikipedia 和站内说明，最后按相关度给你一个展示版 TopK。
+                      Wikipedia 更像百科词条，GitHub 更像代码仓库搜索，arXiv 更像论文搜索，Open Library 更像图书检索。它们都能拿来教学，但都不等于真正的通用网页搜索。
                     </p>
                     <p className="compare-subtitle">
-                      所以像“system prompt”“Python”“Alan Turing”这类词条型查询通常更容易命中；像“刘亦菲”这种中文人名，单一来源不一定会直接给摘要，但其他来源仍然可能补上内容。
+                      这也是为什么实际通用搜索更接近百度、必应这类搜索引擎：实时性更强、覆盖范围更广、搜人物和热点通常更自然。
                     </p>
                   </article>
                 </div>
@@ -1747,7 +1904,7 @@ function App() {
                       className="search-form"
                       onSubmit={(event) => {
                         event.preventDefault();
-                        void runDuckDuckGoSearch();
+                        void runSearch();
                       }}
                     >
                       <label className="search-field">
@@ -1778,19 +1935,35 @@ function App() {
                           开始搜索
                         </button>
                         <p className="search-helper">
-                          这一步会并行参考多个来源，再按关键词相关度做一个展示版 TopK 排序。
+                          这一步会直接请求当前 tab 对应的公开搜索源。
                         </p>
                       </div>
                     </form>
 
                     <div className="search-chip-row">
-                      {["system prompt", "RAG", "Python", "Alan Turing", "北京"].map((example) => (
+                      {[
+                        currentSearchSource.defaultQuery,
+                        activeSearchSource === "wikipedia"
+                          ? "北京"
+                          : activeSearchSource === "github"
+                            ? "langchain"
+                            : activeSearchSource === "arxiv"
+                              ? "RAG"
+                              : "哈利波特",
+                        activeSearchSource === "wikipedia"
+                          ? "人工智能"
+                          : activeSearchSource === "github"
+                            ? "transformers"
+                            : activeSearchSource === "arxiv"
+                              ? "transformer"
+                              : "活着",
+                      ].map((example) => (
                         <button
                           className="search-chip"
                           key={example}
                           onClick={() => {
                             setSearchQuery(example);
-                            void runDuckDuckGoSearch(example);
+                            void runSearch(example);
                           }}
                           type="button"
                         >
@@ -1801,13 +1974,7 @@ function App() {
 
                     <div className="search-request-card">
                       <span className="function-context-label">aggregation preview</span>
-                      <pre className="compare-pre">{`sources = [
-  "网页答案源",
-  "Wikipedia",
-  "站内课程说明"
-]
-query = "${searchQuery}"
-topK = ${searchLimit}`}</pre>
+                      <pre className="compare-pre">{searchRequestPreview || `query = "${searchQuery}"`}</pre>
                     </div>
                   </section>
 
@@ -1876,11 +2043,11 @@ topK = ${searchLimit}`}</pre>
                             <div className="search-empty">
                               <p>
                                 {!hasSearchContent
-                                  ? "这次连聚合兜底都没有命中明显内容。你可以直接打开搜索结果页继续看网页结果。"
-                                  : "这次只有一条特别明显的命中结果；你可以换一个词再试，或者直接打开搜索结果页。"}
+                                  ? "这次没有命中明显结果。你可以换一个词再试，或者直接打开对应站点的搜索页。"
+                                  : "这次只有一条特别明显的命中结果；你可以换一个词再试，或者直接打开对应站点的搜索页。"}
                               </p>
                               <a className="search-link" href={fullSearchUrl} rel="noreferrer" target="_blank">
-                                打开搜索结果页
+                                打开对应站点的搜索页
                               </a>
                             </div>
                           )}

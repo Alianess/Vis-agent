@@ -335,12 +335,43 @@ export const searchApiNotes = [
     body: "DuckDuckGo 本身是一个面向用户的搜索引擎，强调隐私和简洁体验。开发里常会把它当成“搜索能力”的代表案例来讲，但真正落地时，接口形态和网站搜索页并不总是一回事。",
   },
   {
+    title: "百度 / 必应 / Google",
+    body: "这类通用搜索引擎更接近大家日常理解的“搜索”：覆盖范围更大、实时性更强，搜新闻、人物、热点和网页通常效果更好。但纯前端公开接入并不总是容易。",
+  },
+  {
     title: "Tavily / Exa / Serper",
     body: "更像给 AI 和开发者用的搜索 API，适合做网页检索、RAG 和搜索增强。通常会提供更稳定的结果结构和更明确的参数控制。",
   },
+];
+
+export const searchSourceDemos = [
   {
-    title: "微博 / 小红书 / 抖音搜索 API",
-    body: "这类更常见于第三方平台数据 API 或 scraper API。它们搜的不是全网网页，而是平台内内容，字段和稳定性也往往更平台化。",
+    id: "wikipedia",
+    label: "Wikipedia",
+    defaultQuery: "刘亦菲",
+    title: "百科词条搜索",
+    subtitle: "适合查人物、概念、历史事件和知识背景，结果稳定，也非常适合做纯前端演示。",
+  },
+  {
+    id: "github",
+    label: "GitHub",
+    defaultQuery: "大模型 agent",
+    title: "代码仓库搜索",
+    subtitle: "更适合查开源项目、技术框架和工具生态，不是全网搜索，但很适合开发者学习。",
+  },
+  {
+    id: "arxiv",
+    label: "arXiv",
+    defaultQuery: "大语言模型 large language model",
+    title: "论文搜索",
+    subtitle: "适合查学术论文和研究趋势，尤其是 AI 领域。但它搜的是论文，不是大众网页。",
+  },
+  {
+    id: "openlibrary",
+    label: "Open Library",
+    defaultQuery: "三体",
+    title: "图书搜索",
+    subtitle: "适合查书籍、作者和出版信息，能帮助用户理解“搜索源不同，结果世界也不同”。",
   },
 ];
 
