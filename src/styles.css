@@ -427,7 +427,7 @@ code {
 }
 
 .function-compare-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   margin-top: 18px;
 }
 
@@ -760,6 +760,43 @@ code {
 
 .function-input-body {
   min-height: 320px;
+}
+
+.function-context-body {
+  display: grid;
+  gap: 16px;
+  padding: 12px 0 0;
+}
+
+.function-context-block {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(11, 18, 32, 0.04);
+}
+
+.function-context-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.function-context-prompt {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.75;
+  letter-spacing: -0.02em;
+}
+
+.function-context-tools {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--ink);
+  line-height: 1.7;
+  font-size: 0.92rem;
 }
 
 .schema-pre {

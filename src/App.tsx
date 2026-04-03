@@ -1150,11 +1150,6 @@ function App() {
                     <p className="compare-title">模型只能靠已有知识或安全兜底来回答</p>
                     <p>{currentFunctionPreset.withoutToolsOutput}</p>
                   </article>
-                  <article className="compare-card">
-                    <span className="panel-label">带上 tools</span>
-                    <p className="compare-title">提示词上下文里先注入可调用函数清单</p>
-                    <pre className="compare-pre">{currentFunctionPreset.toolSpec}</pre>
-                  </article>
                 </div>
 
                 <div className="lesson-toolbar">
@@ -1180,15 +1175,26 @@ function App() {
                 <div className="function-shell">
                   <section className="composer-card">
                     <div className="composer-head">
-                      <span className="panel-label">用户输入</span>
+                      <span className="panel-label">发给模型的上下文</span>
                     </div>
-                    <div className="composer-body function-input-body">
-                      <p>
-                        {typedFunctionInput}
-                        {functionPhase === "typing" ? (
-                          <span className="stream-caret composer-caret" aria-hidden="true" />
-                        ) : null}
-                      </p>
+                    <div className="function-context-body">
+                      <div className="function-context-block">
+                        <span className="function-context-label">user prompt</span>
+                        <p className="function-context-prompt">
+                          {typedFunctionInput}
+                          {functionPhase === "typing" ? (
+                            <span className="stream-caret composer-caret" aria-hidden="true" />
+                          ) : null}
+                        </p>
+                      </div>
+                      <div className="function-context-block">
+                        <span className="function-context-label">tools</span>
+                        <pre className="function-context-tools">{currentFunctionPreset.toolSpec}</pre>
+                      </div>
+                    </div>
+                    <div className="composer-footer">
+                      <span className="signal-dot" />
+                      <span>模型不是凭空知道函数名，而是先在上下文里看到了可用 tools 清单。</span>
                     </div>
                   </section>
 
