@@ -1151,6 +1151,15 @@ function App() {
                     <p>
                       你可以把 tools 理解成一张“可用工具清单”。模型平时并不会自动读取时间、天气或数据库，只有当程序把这些函数定义放进上下文里，它才知道自己有哪些外部能力可以调用。
                     </p>
+                    <p className="compare-subtitle">当前这个示例里的 tools，可以这样拆开看：</p>
+                    <div className="tool-guide-list">
+                      {currentFunctionPreset.toolGuide.map((item) => (
+                        <div className="tool-guide-item" key={item.key}>
+                          <span className="tool-guide-key">{item.key}</span>
+                          <p className="tool-guide-meaning">{item.meaning}</p>
+                        </div>
+                      ))}
+                    </div>
                   </article>
                   <article className="compare-card compare-card-muted">
                     <span className="panel-label">不带 tools</span>
@@ -1200,14 +1209,6 @@ function App() {
                         <p className="function-context-help">
                           这里展示的不是函数代码本体，而是给模型看的“函数说明书”：函数叫什么、是干什么的、要传哪些参数。
                         </p>
-                        <div className="tool-guide-list">
-                          {currentFunctionPreset.toolGuide.map((item) => (
-                            <div className="tool-guide-item" key={item.key}>
-                              <span className="tool-guide-key">{item.key}</span>
-                              <p className="tool-guide-meaning">{item.meaning}</p>
-                            </div>
-                          ))}
-                        </div>
                       </div>
                     </div>
                     <div className="composer-footer">

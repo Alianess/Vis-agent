@@ -606,6 +606,12 @@ code {
   line-height: 1.75;
 }
 
+.compare-subtitle {
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
 .compare-pre {
   margin: 14px 0 0;
   padding: 16px;
