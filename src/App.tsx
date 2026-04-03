@@ -1,11 +1,8 @@
 import {
-  audiences,
   highlightCards,
   learningPath,
   modules,
   openingDemo,
-  quickFacts,
-  sections,
 } from "./content";
 
 function App() {
@@ -19,7 +16,7 @@ function App() {
             <span className="brand-dot" />
             <div>
               <p className="brand-title">AI 架构可视化</p>
-              <p className="brand-subtitle">给懂一点代码、但还没真正看懂 AI 的人</p>
+              <p className="brand-subtitle">给想把 AI 看明白的人</p>
             </div>
           </div>
 
@@ -32,11 +29,11 @@ function App() {
 
         <div className="hero-copy">
           <p className="eyebrow">从 Prompt 到 Agent</p>
-          <h1>把 AI 的工作方式，一层一层看明白。</h1>
+          <h1>把 AI 的工作方式，真的看明白。</h1>
           <p className="hero-body">
-            如果你会一点代码，但总觉得 Prompt、RAG、Tool Call、MCP、Agent
-            这些词始终连不起来，这个站点就是给你的。
-            它不会一上来灌一堆框架名，而是先把最基本的输入、输出、角色、接口和运行链路讲清楚。
+            不是术语大全，也不是框架文档。
+            这里只做一件事：把 Prompt、模型、工具、检索、记忆和 Agent
+            放进同一张清楚的图里。
           </p>
 
           <div className="hero-actions">
@@ -68,23 +65,13 @@ function App() {
           </div>
 
           <div className="hero-note">
-            <span>推荐路径</span>
-            <p>先看模型怎么回答，再看应用怎么把模型变成一个真正能工作的系统。</p>
+            <span>推荐看法</span>
+            <p>先看输入与输出，再看链路，最后再看 Agent。</p>
           </div>
         </div>
       </header>
 
       <main className="content">
-        <section className="quick-facts" aria-label="项目摘要">
-          {quickFacts.map((fact) => (
-            <article className="fact-card" key={fact.label}>
-              <p className="fact-label">{fact.label}</p>
-              <h2>{fact.value}</h2>
-              <p>{fact.note}</p>
-            </article>
-          ))}
-        </section>
-
         <section className="spotlight-grid">
           {highlightCards.map((card) => (
             <article className="spotlight-card" key={card.step}>
@@ -95,20 +82,10 @@ function App() {
           ))}
         </section>
 
-        <section className="section-grid">
-          {sections.map((section) => (
-            <article className="section-card" id={section.id} key={section.id}>
-              <p className="eyebrow">{section.eyebrow}</p>
-              <h2>{section.title}</h2>
-              <p>{section.body}</p>
-            </article>
-          ))}
-        </section>
-
         <section className="demo-section" id="demo">
           <div className="section-heading">
             <p className="eyebrow">开篇示例</p>
-            <h2>同一个请求，为什么加了规则之后，结果会明显变好。</h2>
+            <h2>同一个请求，约束越清楚，输出越稳定。</h2>
           </div>
 
           <div className="request-card">
@@ -141,31 +118,10 @@ function App() {
           </div>
         </section>
 
-        <section className="audience-section">
-          <div className="section-heading">
-            <p className="eyebrow">怎么使用</p>
-            <h2>普通学习者直接看站点，开发者才需要环境。</h2>
-          </div>
-
-          <div className="audience-grid">
-            {audiences.map((audience) => (
-              <article className="audience-card" key={audience.title}>
-                <h3>{audience.title}</h3>
-                <p>{audience.description}</p>
-                <ul>
-                  {audience.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-        </section>
-
         <section className="path-section" id="path">
           <div className="section-heading">
             <p className="eyebrow">学习路径</p>
-            <h2>先建立直觉，再进入架构。</h2>
+            <h2>六步就够。</h2>
           </div>
 
           <ol className="path-list">
@@ -181,7 +137,7 @@ function App() {
         <section className="modules-section" id="modules">
           <div className="section-heading">
             <p className="eyebrow">模块概览</p>
-            <h2>第一版先把最关键的六层讲透。</h2>
+            <h2>先把最关键的五层讲透。</h2>
           </div>
 
           <div className="module-grid">
@@ -197,8 +153,8 @@ function App() {
 
         <section className="api-section" id="api">
           <div className="section-heading">
-            <p className="eyebrow">静态站也能接 API</p>
-            <h2>界面可以很轻，后端能力可以是真实的。</h2>
+            <p className="eyebrow">API</p>
+            <h2>前端轻，后端真。</h2>
           </div>
 
           <div className="api-grid">
