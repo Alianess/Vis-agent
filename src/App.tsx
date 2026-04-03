@@ -1,4 +1,4 @@
-import { apiCards, comparison, stagePills, steps } from "./content";
+import { apiCards, exampleCards, examplePanels, introTopics, stagePills } from "./content";
 
 function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || "未配置";
@@ -11,48 +11,42 @@ function App() {
             <span className="brand-mark" />
             <div>
               <p className="brand-title">AI 架构可视化</p>
-              <p className="brand-subtitle">静态站 · 中文 · 面向懂一点代码的小白</p>
+              <p className="brand-subtitle">给懂一点代码的小白看的入门站</p>
             </div>
           </div>
 
           <div className="nav-links">
-            <a href="#intro">介绍</a>
-            <a href="#demo">示例</a>
+            <a href="#example">示例</a>
+            <a href="#topics">入门目录</a>
             <a href="#api">API</a>
           </div>
         </nav>
 
-        <section className="hero-copy" id="intro">
-          <p className="eyebrow">从 Prompt 到 Agent</p>
-          <h1>把 AI 的工作方式讲明白。</h1>
+        <section className="hero-copy">
+          <p className="eyebrow">从 Prompt 到 ReAct</p>
+          <h1>先把入门部分讲透。</h1>
           <p className="hero-text">
-            不讲框架黑话，不堆一整页术语。
-            先看模型如何被引导，再看应用如何把模型变成一个真正能工作的系统。
+            提示词、系统提示词、输出、结构化输出、Function Calling、DuckDuckGo、搜索实现、ReAct
+            循环。先把这 8 个点看明白，再进入更完整的 Agent 架构。
           </p>
 
           <div className="hero-actions">
-            <a className="button button-primary" href="#demo">
-              先看一个例子
+            <a className="button button-primary" href="#topics">
+              看入门目录
             </a>
-            <a className="button button-secondary" href="#flow">
-              再看整体路径
+            <a className="button button-secondary" href="#example">
+              先看示例
             </a>
           </div>
         </section>
 
-        <section className="stage" aria-label="架构预览">
-          <div className="stage-panel stage-panel-top">
-            <span className="panel-label">Prompt</span>
-            <p>写一句首页副标题，介绍这个网站帮助人理解 AI 和 Agent 架构。</p>
-          </div>
-          <div className="stage-panel stage-panel-middle">
-            <span className="panel-label">System</span>
-            <p>清楚、克制、面向懂一点代码但没看懂 AI 架构的人。</p>
-          </div>
-          <div className="stage-panel stage-panel-bottom">
-            <span className="panel-label">Output</span>
-            <p>{`{ "headline": "把 AI 架构看明白" }`}</p>
-          </div>
+        <section className="stage" aria-label="首页示意">
+          {examplePanels.map((panel, index) => (
+            <div className={`stage-panel stage-panel-${index + 1}`} key={panel.label}>
+              <span className="panel-label">{panel.label}</span>
+              <pre>{panel.value}</pre>
+            </div>
+          ))}
         </section>
 
         <div className="pill-row">
@@ -65,54 +59,44 @@ function App() {
       </header>
 
       <main className="main">
-        <section className="section compare" id="demo">
+        <section className="section" id="topics">
           <div className="section-heading">
-            <p className="eyebrow">一个例子</p>
-            <h2>同一个请求，约束越清楚，输出越稳定。</h2>
+            <p className="eyebrow">入门目录</p>
+            <h2>这一阶段先学这 8 个点。</h2>
           </div>
 
-          <div className="request">
-            <span className="request-label">用户请求</span>
-            <p>{comparison.request}</p>
-          </div>
-
-          <div className="compare-grid">
-            <article className="compare-card">
-              <span className="card-label">Prompt</span>
-              <pre>{comparison.prompt}</pre>
-            </article>
-            <article className="compare-card">
-              <span className="card-label">System</span>
-              <pre>{comparison.system}</pre>
-            </article>
-            <article className="compare-card compare-card-dark">
-              <span className="card-label">Structured Output</span>
-              <pre>{comparison.output}</pre>
-            </article>
-          </div>
-        </section>
-
-        <section className="section flow" id="flow">
-          <div className="section-heading">
-            <p className="eyebrow">学习路径</p>
-            <h2>先输入，再链路，最后 Agent。</h2>
-          </div>
-
-          <div className="flow-grid">
-            {steps.map((step) => (
-              <article className="flow-card" key={step.index}>
-                <span className="flow-index">{step.index}</span>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
+          <div className="topic-grid">
+            {introTopics.map((topic) => (
+              <article className="topic-card" key={topic.index}>
+                <span className="topic-index">{topic.index}</span>
+                <h3>{topic.title}</h3>
+                <p>{topic.body}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="section api" id="api">
+        <section className="section" id="example">
+          <div className="section-heading">
+            <p className="eyebrow">三个关键示例</p>
+            <h2>从输出控制，到外部能力，再到 Agent 循环。</h2>
+          </div>
+
+          <div className="example-grid">
+            {exampleCards.map((card) => (
+              <article className="example-card" key={card.title}>
+                <h3>{card.title}</h3>
+                <p>{card.body}</p>
+                <pre>{card.code}</pre>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="section" id="api">
           <div className="section-heading">
             <p className="eyebrow">静态站也能接 API</p>
-            <h2>前端很轻，后端可以是真实的。</h2>
+            <h2>界面很轻，能力可以是真实的。</h2>
           </div>
 
           <div className="api-grid">
@@ -123,7 +107,7 @@ function App() {
               </article>
             ))}
             <article className="api-card">
-              <h3>当前地址</h3>
+              <h3>当前 API 地址</h3>
               <code>{apiBase}</code>
               <p>通过 `VITE_API_BASE_URL` 注入，不把密钥写进前端。</p>
             </article>
