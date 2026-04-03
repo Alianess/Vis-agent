@@ -6,6 +6,7 @@ import {
   ioDemo,
   learningModules,
   stagePills,
+  systemPromptDemos,
 } from "./content";
 
 type Route = "home" | "learn";
@@ -27,6 +28,17 @@ function App() {
     "typing" | "reading" | "thinking" | "answering" | "done"
   >("typing");
   const [isThinkCollapsed, setIsThinkCollapsed] = useState(false);
+  const [activeSystemPreset, setActiveSystemPreset] = useState(systemPromptDemos[0].id);
+  const [systemThinkEnabled, setSystemThinkEnabled] = useState(true);
+  const [systemRunSeed, setSystemRunSeed] = useState(0);
+  const [typedSystemPrompt, setTypedSystemPrompt] = useState("");
+  const [typedSystemInput, setTypedSystemInput] = useState("");
+  const [streamedSystemThink, setStreamedSystemThink] = useState("");
+  const [streamedSystemOutput, setStreamedSystemOutput] = useState("");
+  const [systemPhase, setSystemPhase] = useState<
+    "prompting" | "typing" | "reading" | "thinking" | "answering" | "done"
+  >("prompting");
+  const [isSystemThinkCollapsed, setIsSystemThinkCollapsed] = useState(false);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -36,6 +48,9 @@ function App() {
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+
+  const currentSystemPreset =
+    systemPromptDemos.find((preset) => preset.id === activeSystemPreset) ?? systemPromptDemos[0];
 
   useEffect(() => {
     if (route !== "learn" || activeModule !== "io") {
@@ -121,6 +136,107 @@ function App() {
     };
   }, [route, activeModule, thinkEnabled, runSeed]);
 
+  useEffect(() => {
+    if (route !== "learn" || activeModule !== "system") {
+      return;
+    }
+
+    let cancelled = false;
+
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => {
+        window.setTimeout(resolve, ms);
+      });
+
+    const typeText = async (
+      text: string,
+      setter: (value: string) => void,
+      step = 1,
+      delay = 24,
+    ) => {
+      let current = "";
+
+      for (let index = 0; index < text.length; index += step) {
+        if (cancelled) {
+          return;
+        }
+
+        current = text.slice(0, index + step);
+        setter(current);
+        await sleep(delay);
+      }
+    };
+
+    const runDemo = async () => {
+      setTypedSystemPrompt("");
+      setTypedSystemInput("");
+      setStreamedSystemThink("");
+      setStreamedSystemOutput("");
+      setIsSystemThinkCollapsed(false);
+      setSystemPhase("prompting");
+
+      await typeText(currentSystemPreset.systemPrompt, setTypedSystemPrompt, 3, 10);
+      if (cancelled) {
+        return;
+      }
+
+      await sleep(180);
+      if (cancelled) {
+        return;
+      }
+
+      setSystemPhase("typing");
+      await typeText(currentSystemPreset.userInput, setTypedSystemInput, 1, 22);
+      if (cancelled) {
+        return;
+      }
+
+      setSystemPhase("reading");
+      await sleep(380);
+      if (cancelled) {
+        return;
+      }
+
+      if (systemThinkEnabled) {
+        setSystemPhase("thinking");
+        await typeText(
+          `<think>\n${currentSystemPreset.think}\n</think>`,
+          setStreamedSystemThink,
+          2,
+          16,
+        );
+        if (cancelled) {
+          return;
+        }
+
+        await sleep(520);
+        if (cancelled) {
+          return;
+        }
+
+        setIsSystemThinkCollapsed(true);
+        await sleep(260);
+        if (cancelled) {
+          return;
+        }
+      }
+
+      setSystemPhase("answering");
+      await typeText(currentSystemPreset.output, setStreamedSystemOutput, 2, 18);
+      if (cancelled) {
+        return;
+      }
+
+      setSystemPhase("done");
+    };
+
+    void runDemo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [route, activeModule, activeSystemPreset, systemThinkEnabled, systemRunSeed, currentSystemPreset]);
+
   const phaseLabel =
     streamPhase === "typing"
       ? "正在输入问题"
@@ -138,6 +254,27 @@ function App() {
 
   const replayDemo = () => {
     setRunSeed((value) => value + 1);
+  };
+
+  const systemPhaseLabel =
+    systemPhase === "prompting"
+      ? "正在加载系统提示词"
+      : systemPhase === "typing"
+        ? "正在输入用户问题"
+        : systemPhase === "reading"
+          ? "正在读取上下文"
+          : systemPhase === "thinking"
+            ? "正在展开思考"
+            : systemPhase === "answering"
+              ? "正在流式输出"
+              : "输出完成";
+
+  const systemPhaseHint = systemThinkEnabled
+    ? "打开后，会先展示 <think> 思考流，再自动折叠。"
+    : "关闭后，会跳过思考流，直接开始生成回答。";
+
+  const replaySystemDemo = () => {
+    setSystemRunSeed((value) => value + 1);
   };
 
   if (route === "learn") {
@@ -295,6 +432,160 @@ function App() {
                   <article className="insight-card">
                     <span className="panel-label">这一步的重点</span>
                     <p>输入不是“随便问一句”这么简单。你写进输入里的对象、语气、结构要求，都会直接改变输出。</p>
+                  </article>
+                </div>
+              </>
+            ) : activeModule === "system" ? (
+              <>
+                <div className="lesson-head">
+                  <p className="eyebrow">第二页</p>
+                  <h1>系统提示词</h1>
+                  <p>
+                    这一页不再只看“用户说了什么”，而是看模型在正式回答前，被怎样设定身份、目标、边界和语气。
+                  </p>
+                </div>
+
+                <div className="preset-switcher" role="tablist" aria-label="系统提示词示例">
+                  {systemPromptDemos.map((preset) => (
+                    <button
+                      aria-selected={activeSystemPreset === preset.id}
+                      className={`preset-chip ${activeSystemPreset === preset.id ? "is-active" : ""}`}
+                      key={preset.id}
+                      onClick={() => setActiveSystemPreset(preset.id)}
+                      role="tab"
+                      type="button"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="system-intro-card">
+                  <span className="panel-label">当前示例</span>
+                  <h2>{currentSystemPreset.title}</h2>
+                  <p>{currentSystemPreset.subtitle}</p>
+                </div>
+
+                <div className="lesson-toolbar">
+                  <button className="replay-button" onClick={replaySystemDemo} type="button">
+                    重新播放
+                  </button>
+                  <button
+                    aria-pressed={systemThinkEnabled}
+                    className={`think-switch ${systemThinkEnabled ? "is-on" : ""}`}
+                    onClick={() => setSystemThinkEnabled((value) => !value)}
+                    type="button"
+                  >
+                    <span className="think-switch-copy">
+                      <strong>思考开关</strong>
+                      <small>{systemPhaseHint}</small>
+                    </span>
+                    <span className="think-switch-track" aria-hidden="true">
+                      <span className="think-switch-thumb" />
+                    </span>
+                  </button>
+                </div>
+
+                <div className="system-stage">
+                  <div className="system-stage-stack">
+                    <section className="system-prompt-card">
+                      <div className="composer-head">
+                        <span className="panel-label">System Prompt</span>
+                      </div>
+                      <pre className="system-prompt-body">{typedSystemPrompt}</pre>
+                    </section>
+
+                    <section className="composer-card system-user-card">
+                      <div className="composer-head">
+                        <span className="panel-label">用户输入</span>
+                      </div>
+                      <div className="composer-body system-user-body">
+                        <p>
+                          {typedSystemInput}
+                          {systemPhase === "typing" ? (
+                            <span className="stream-caret composer-caret" aria-hidden="true" />
+                          ) : null}
+                        </p>
+                      </div>
+                    </section>
+                  </div>
+
+                  <section className="stream-card" aria-live="polite">
+                    <div className="stream-head">
+                      <div>
+                        <span className="panel-label">系统提示词生效中</span>
+                        <p className="stream-status">{systemPhaseLabel}</p>
+                      </div>
+                      <div className="stream-pulse" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+
+                    <div className="stream-console">
+                      <div className="stream-line">
+                        <span className="stream-key">role</span>
+                        <span className="stream-value">{currentSystemPreset.label}</span>
+                      </div>
+                      <div className="stream-line">
+                        <span className="stream-key">mode</span>
+                        <span className="stream-value">
+                          {systemThinkEnabled ? "system prompt + reasoning" : "system prompt only"}
+                        </span>
+                      </div>
+
+                      {systemThinkEnabled ? (
+                        <div className="stream-think-wrap">
+                          <button
+                            className="think-block-head"
+                            onClick={() => setIsSystemThinkCollapsed((value) => !value)}
+                            type="button"
+                          >
+                            <span className="stream-key">think</span>
+                            <span className="think-block-state">
+                              {isSystemThinkCollapsed ? "已折叠" : "展开中"}
+                            </span>
+                          </button>
+
+                          {isSystemThinkCollapsed ? (
+                            <div className="think-collapsed">
+                              <p>思考流已展示完成并自动折叠，点击上方可以重新展开查看。</p>
+                            </div>
+                          ) : (
+                            <pre className="think-stream">
+                              {streamedSystemThink}
+                              {systemPhase === "thinking" ? (
+                                <span className="stream-caret" aria-hidden="true" />
+                              ) : null}
+                            </pre>
+                          )}
+                        </div>
+                      ) : null}
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">output</span>
+                        <p className="stream-output">
+                          {streamedSystemOutput}
+                          {systemPhase === "answering" ? (
+                            <span className="stream-caret" aria-hidden="true" />
+                          ) : null}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="io-insights">
+                  <article className="insight-card">
+                    <span className="panel-label">观察点</span>
+                    <p>{currentSystemPreset.note}</p>
+                  </article>
+                  <article className="insight-card">
+                    <span className="panel-label">这一页的重点</span>
+                    <p>
+                      system prompt 不只是“加一句设定”。它会提前规定模型的身份、结构、语气和边界，所以连思考路径和最后输出都会一起被塑形。
+                    </p>
                   </article>
                 </div>
               </>

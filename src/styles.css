@@ -372,7 +372,9 @@ code {
 .api-grid,
 .learn-shell,
 .lesson-stage,
-.io-insights {
+.io-insights,
+.system-stage,
+.system-stage-stack {
   display: grid;
   gap: 18px;
 }
@@ -401,6 +403,15 @@ code {
   margin-top: 20px;
 }
 
+.system-stage {
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  margin-top: 22px;
+}
+
+.system-stage-stack {
+  align-content: start;
+}
+
 .topic-card,
 .api-card,
 .workspace-sidebar,
@@ -408,6 +419,8 @@ code {
 .composer-card,
 .stream-card,
 .insight-card,
+.system-intro-card,
+.system-prompt-card,
 .placeholder-panel {
   padding: 22px;
   border-radius: 28px;
@@ -493,6 +506,63 @@ code {
 .lesson-head p:last-child {
   max-width: 58ch;
   margin-top: 10px;
+}
+
+.preset-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.preset-chip {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.preset-chip:hover {
+  transform: translateY(-1px);
+}
+
+.preset-chip.is-active {
+  background: #0b1220;
+  border-color: #0b1220;
+  color: #ffffff;
+}
+
+.system-intro-card,
+.system-prompt-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.system-intro-card {
+  margin-top: 18px;
+}
+
+.system-intro-card h2 {
+  margin: 14px 0 10px;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  letter-spacing: -0.04em;
+}
+
+.system-intro-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
 }
 
 .lesson-toolbar {
@@ -593,6 +663,28 @@ code {
 .composer-card,
 .stream-card {
   min-height: 360px;
+}
+
+.system-prompt-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 248, 253, 0.92));
+}
+
+.system-prompt-body {
+  margin: 18px 0 0;
+  min-height: 220px;
+  white-space: pre-wrap;
+  color: var(--ink);
+  line-height: 1.8;
+  font-size: 0.98rem;
+}
+
+.system-user-card {
+  min-height: 180px;
+}
+
+.system-user-body {
+  padding: 12px 0 0;
 }
 
 .composer-card {
@@ -868,7 +960,8 @@ code {
   .api-grid,
   .learn-shell,
   .lesson-stage,
-  .io-insights {
+  .io-insights,
+  .system-stage {
     grid-template-columns: 1fr;
   }
 
