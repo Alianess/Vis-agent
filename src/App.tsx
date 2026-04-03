@@ -1200,6 +1200,14 @@ function App() {
                         <p className="function-context-help">
                           这里展示的不是函数代码本体，而是给模型看的“函数说明书”：函数叫什么、是干什么的、要传哪些参数。
                         </p>
+                        <div className="tool-guide-list">
+                          {currentFunctionPreset.toolGuide.map((item) => (
+                            <div className="tool-guide-item" key={item.key}>
+                              <span className="tool-guide-key">{item.key}</span>
+                              <p className="tool-guide-meaning">{item.meaning}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className="composer-footer">

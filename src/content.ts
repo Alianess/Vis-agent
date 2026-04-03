@@ -148,6 +148,36 @@ export const functionCallDemos = [
     }
   }
 ]`,
+    toolGuide: [
+      {
+        key: "type",
+        meaning: "告诉模型这是一种“函数型工具”，不是普通文本片段。",
+      },
+      {
+        key: "name",
+        meaning: "模型真正发起调用时要使用的函数名，这里是 get_current_time。",
+      },
+      {
+        key: "description",
+        meaning: "告诉模型这个工具是干什么的，帮助它判断什么时候该调用。",
+      },
+      {
+        key: "parameters",
+        meaning: "参数的整体结构说明，告诉模型传参时必须遵守什么 schema。",
+      },
+      {
+        key: "properties.timezone",
+        meaning: "可传入的时区字段。这里让模型知道要告诉函数查询哪个时区的时间。",
+      },
+      {
+        key: "properties.format",
+        meaning: "可选的时间格式字段，用来控制函数返回什么样的时间字符串。",
+      },
+      {
+        key: "required",
+        meaning: "必填字段清单。这里要求 timezone 一定要传，不然函数不知道该按哪个时区取时间。",
+      },
+    ],
     argumentsJson: `{
   "timezone": "Asia/Shanghai",
   "format": "yyyy-MM-dd HH:mm:ss"
@@ -181,6 +211,36 @@ export const functionCallDemos = [
     }
   }
 ]`,
+    toolGuide: [
+      {
+        key: "type",
+        meaning: "说明这是一种可执行的函数工具。",
+      },
+      {
+        key: "name",
+        meaning: "模型发起调用时要写 weather_lookup，程序才能识别到正确工具。",
+      },
+      {
+        key: "description",
+        meaning: "告诉模型这个工具专门用来查天气，而不是查别的信息。",
+      },
+      {
+        key: "parameters",
+        meaning: "规定天气查询时允许传哪些字段、字段类型是什么。",
+      },
+      {
+        key: "properties.location",
+        meaning: "地点参数。模型需要先从用户问题里抽出城市，比如“上海”。",
+      },
+      {
+        key: "properties.date",
+        meaning: "日期参数。模型需要把“明天”这种自然语言转成函数能接收的查询条件。",
+      },
+      {
+        key: "required",
+        meaning: "这里 location 和 date 都是必填，不然函数无法知道要查哪里、哪一天的天气。",
+      },
+    ],
     argumentsJson: `{
   "location": "上海",
   "date": "明天"
@@ -222,6 +282,36 @@ export const functionCallDemos = [
     }
   }
 ]`,
+    toolGuide: [
+      {
+        key: "type",
+        meaning: "说明这是一个函数工具，可以被模型请求调用。",
+      },
+      {
+        key: "name",
+        meaning: "调用名是 search_lessons，模型要按这个名字请求程序去检索课程内容。",
+      },
+      {
+        key: "description",
+        meaning: "告诉模型这个工具负责查站内课程文档，不是查全网。",
+      },
+      {
+        key: "parameters",
+        meaning: "规定检索时允许传哪些参数，以及它们的数据类型。",
+      },
+      {
+        key: "properties.query",
+        meaning: "检索关键词。模型需要先把用户问题压成适合搜索的一句 query。",
+      },
+      {
+        key: "properties.top_k",
+        meaning: "返回多少条结果。这里让模型知道它可以控制检索返回的数量。",
+      },
+      {
+        key: "required",
+        meaning: "query 是必填，因为没有查询词就无法检索。",
+      },
+    ],
     argumentsJson: `{
   "query": "结构化输出 这一节 主要讲什么",
   "top_k": 2
