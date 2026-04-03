@@ -1145,6 +1145,13 @@ function App() {
                 </div>
 
                 <div className="function-compare-grid">
+                  <article className="compare-card">
+                    <span className="panel-label">Tools 是什么</span>
+                    <p className="compare-title">它不是“模型会的技能”，而是程序提前开放给模型的一组可调用能力</p>
+                    <p>
+                      你可以把 tools 理解成一张“可用工具清单”。模型平时并不会自动读取时间、天气或数据库，只有当程序把这些函数定义放进上下文里，它才知道自己有哪些外部能力可以调用。
+                    </p>
+                  </article>
                   <article className="compare-card compare-card-muted">
                     <span className="panel-label">不带 tools</span>
                     <p className="compare-title">模型只能靠已有知识或安全兜底来回答</p>
@@ -1190,6 +1197,9 @@ function App() {
                       <div className="function-context-block">
                         <span className="function-context-label">tools</span>
                         <pre className="function-context-tools">{currentFunctionPreset.toolSpec}</pre>
+                        <p className="function-context-help">
+                          这里展示的不是函数代码本体，而是给模型看的“函数说明书”：函数叫什么、是干什么的、要传哪些参数。
+                        </p>
                       </div>
                     </div>
                     <div className="composer-footer">
