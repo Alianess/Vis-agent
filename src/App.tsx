@@ -38,6 +38,30 @@ type SearchItem = {
   title: string;
   text: string;
   url?: string;
+  source: string;
+  score?: number;
+};
+
+type WikipediaSearchResponse = {
+  query?: {
+    search?: Array<{
+      title: string;
+      snippet?: string;
+    }>;
+  };
+};
+
+type WikipediaPageResponse = {
+  query?: {
+    pages?: Record<
+      string,
+      {
+        title?: string;
+        extract?: string;
+        fullurl?: string;
+      }
+    >;
+  };
 };
 
 function getRouteFromHash(hash: string): Route {
@@ -57,6 +81,7 @@ function flattenDuckDuckGoTopics(topics: DuckDuckGoTopic[] = []): SearchItem[] {
             title,
             text: topic.Text,
             url: topic.FirstURL,
+            source: "DuckDuckGo Related Topics",
           },
         ]
       : [];
@@ -96,6 +121,190 @@ function searchDuckDuckGoInstantAnswer(query: string): Promise<DuckDuckGoRespons
     script.src = `https://api.duckduckgo.com/?${params.toString()}`;
     document.body.appendChild(script);
   });
+}
+
+async function fetchWikipediaSummary(
+  query: string,
+): Promise<{ title: string; summary: string; url: string; sourceLabel: string } | null> {
+  const searchLanguages = [
+    { code: "zh", label: "Wikipedia 中文词条兜底" },
+    { code: "en", label: "Wikipedia 英文词条兜底" },
+  ];
+
+  for (const language of searchLanguages) {
+    const searchParams = new URLSearchParams({
+      action: "query",
+      list: "search",
+      srsearch: query,
+      format: "json",
+      origin: "*",
+      utf8: "1",
+      srlimit: "1",
+    });
+
+    const searchResponse = await fetch(
+      `https://${language.code}.wikipedia.org/w/api.php?${searchParams.toString()}`,
+    );
+    if (!searchResponse.ok) {
+      continue;
+    }
+
+    const searchData = (await searchResponse.json()) as WikipediaSearchResponse;
+    const title = searchData.query?.search?.[0]?.title;
+    if (!title) {
+      continue;
+    }
+
+    const pageParams = new URLSearchParams({
+      action: "query",
+      prop: "extracts|info",
+      exintro: "1",
+      explaintext: "1",
+      inprop: "url",
+      titles: title,
+      format: "json",
+      origin: "*",
+    });
+
+    const pageResponse = await fetch(
+      `https://${language.code}.wikipedia.org/w/api.php?${pageParams.toString()}`,
+    );
+    if (!pageResponse.ok) {
+      continue;
+    }
+
+    const pageData = (await pageResponse.json()) as WikipediaPageResponse;
+    const page = Object.values(pageData.query?.pages ?? {})[0];
+    if (page?.extract) {
+      return {
+        title: page.title || title,
+        summary: page.extract,
+        url: page.fullurl || `https://${language.code}.wikipedia.org/wiki/${encodeURIComponent(title)}`,
+        sourceLabel: language.label,
+      };
+    }
+  }
+
+  return null;
+}
+
+function stripHtml(value: string): string {
+  return value.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+}
+
+async function fetchWikipediaSearchItems(query: string, limit = 5): Promise<SearchItem[]> {
+  const languages = ["zh", "en"];
+
+  for (const language of languages) {
+    const params = new URLSearchParams({
+      action: "query",
+      list: "search",
+      srsearch: query,
+      format: "json",
+      origin: "*",
+      utf8: "1",
+      srlimit: String(limit),
+    });
+
+    const response = await fetch(`https://${language}.wikipedia.org/w/api.php?${params.toString()}`);
+    if (!response.ok) {
+      continue;
+    }
+
+    const data = (await response.json()) as WikipediaSearchResponse & {
+      query?: { search?: Array<{ title: string; snippet?: string }> };
+    };
+
+    const items =
+      data.query?.search?.map((item) => ({
+        title: item.title,
+        text: stripHtml(item.snippet || ""),
+        url: `https://${language}.wikipedia.org/wiki/${encodeURIComponent(item.title)}`,
+        source: language === "zh" ? "Wikipedia 中文" : "Wikipedia English",
+      })) ?? [];
+
+    if (items.length > 0) {
+      return items;
+    }
+  }
+
+  return [];
+}
+
+function buildLocalSearchItems(): SearchItem[] {
+  return [
+    ...introTopics.map((item) => ({
+      title: item.title,
+      text: item.body,
+      source: "站内课程",
+      url: "#/learn",
+    })),
+    ...searchApiNotes.map((item) => ({
+      title: item.title,
+      text: item.body,
+      source: "搜索 API 说明",
+      url: "#/learn",
+    })),
+    ...systemPromptDemos.map((item) => ({
+      title: item.title,
+      text: `${item.subtitle} ${item.note}`,
+      source: "系统提示词示例",
+      url: "#/learn",
+    })),
+  ];
+}
+
+function tokenizeQuery(query: string): string[] {
+  const lowered = query.toLowerCase();
+  const asciiTokens = lowered.match(/[a-z0-9]+/g) ?? [];
+  const cjkTokens = Array.from(lowered.match(/[\u4e00-\u9fff]/g) ?? []);
+  return Array.from(new Set([...asciiTokens.filter((item) => item.length > 1), ...cjkTokens]));
+}
+
+function scoreSearchItem(query: string, item: SearchItem): number {
+  const queryText = query.trim().toLowerCase();
+  const title = item.title.toLowerCase();
+  const text = item.text.toLowerCase();
+  const tokens = tokenizeQuery(queryText);
+
+  let score = 0;
+
+  if (queryText && title.includes(queryText)) {
+    score += 20;
+  }
+  if (queryText && text.includes(queryText)) {
+    score += 10;
+  }
+
+  for (const token of tokens) {
+    if (title.includes(token)) {
+      score += 6;
+    }
+    if (text.includes(token)) {
+      score += 3;
+    }
+  }
+
+  return score;
+}
+
+function rankSearchItems(query: string, items: SearchItem[], topK: number): SearchItem[] {
+  const deduped = items.reduce<SearchItem[]>((acc, item) => {
+    const key = `${item.title}::${item.url ?? ""}`;
+    if (!acc.some((existing) => `${existing.title}::${existing.url ?? ""}` === key)) {
+      acc.push(item);
+    }
+    return acc;
+  }, []);
+
+  return deduped
+    .map((item) => ({
+      ...item,
+      score: scoreSearchItem(query, item),
+    }))
+    .filter((item) => (item.score ?? 0) > 0)
+    .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
+    .slice(0, topK);
 }
 
 function App() {
@@ -155,6 +364,7 @@ function App() {
   const [searchHeading, setSearchHeading] = useState("");
   const [searchSummary, setSearchSummary] = useState("");
   const [searchSource, setSearchSource] = useState("");
+  const [searchSourceLabel, setSearchSourceLabel] = useState("DuckDuckGo Instant Answer");
   const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
 
   useEffect(() => {
@@ -715,6 +925,7 @@ function App() {
       setSearchSummary("");
       setSearchHeading("");
       setSearchSource("");
+      setSearchSourceLabel("聚合搜索结果");
       return;
     }
 
@@ -722,16 +933,58 @@ function App() {
     setSearchError("");
 
     try {
-      const data = await searchDuckDuckGoInstantAnswer(trimmedQuery);
-      const related = flattenDuckDuckGoTopics([
-        ...(data.Results ?? []),
-        ...(data.RelatedTopics ?? []),
-      ]).slice(0, searchLimit);
+      const [duckduckgoData, wikipediaItems] = await Promise.all([
+        searchDuckDuckGoInstantAnswer(trimmedQuery),
+        fetchWikipediaSearchItems(trimmedQuery, Math.max(searchLimit, 5)),
+      ]);
 
-      setSearchHeading(data.Heading || trimmedQuery);
-      setSearchSummary(data.AbstractText || data.Answer || data.Definition || "");
-      setSearchSource(data.AbstractURL || data.DefinitionURL || "");
-      setSearchItems(related);
+      const duckduckgoItems: SearchItem[] = [];
+      const summaryText =
+        duckduckgoData.AbstractText || duckduckgoData.Answer || duckduckgoData.Definition || "";
+      const summaryUrl = duckduckgoData.AbstractURL || duckduckgoData.DefinitionURL || "";
+
+      if (summaryText) {
+        duckduckgoItems.push({
+          title: duckduckgoData.Heading || trimmedQuery,
+          text: summaryText,
+          url: summaryUrl,
+          source: "DuckDuckGo Instant Answer",
+        });
+      }
+
+      duckduckgoItems.push(
+        ...flattenDuckDuckGoTopics([...(duckduckgoData.Results ?? []), ...(duckduckgoData.RelatedTopics ?? [])]),
+      );
+
+      const wikipediaFallback = !summaryText ? await fetchWikipediaSummary(trimmedQuery) : null;
+      const fallbackItems = wikipediaFallback
+        ? [
+            {
+              title: wikipediaFallback.title,
+              text: wikipediaFallback.summary,
+              url: wikipediaFallback.url,
+              source: wikipediaFallback.sourceLabel,
+            } satisfies SearchItem,
+          ]
+        : [];
+
+      const ranked = rankSearchItems(trimmedQuery, [
+        ...duckduckgoItems,
+        ...wikipediaItems,
+        ...fallbackItems,
+        ...buildLocalSearchItems(),
+      ], searchLimit);
+
+      const featured = ranked[0];
+
+      setSearchHeading(featured?.title || trimmedQuery);
+      setSearchSummary(
+        featured?.text ||
+          "这次查询没有命中明显摘要，但你仍然可以打开正常搜索页继续查看网页结果。",
+      );
+      setSearchSource(featured?.url || "");
+      setSearchSourceLabel(featured?.source || "聚合搜索结果");
+      setSearchItems(ranked.slice(1));
       setSearchStatus("success");
     } catch (error) {
       setSearchStatus("error");
@@ -740,8 +993,12 @@ function App() {
       setSearchSummary("");
       setSearchHeading("");
       setSearchSource("");
+      setSearchSourceLabel("聚合搜索结果");
     }
   };
+
+  const fullSearchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}`;
+  const hasSearchContent = Boolean(searchSummary || searchSource || searchItems.length);
 
   useEffect(() => {
     if (route === "learn" && activeModule === "search" && searchStatus === "idle") {
@@ -1457,9 +1714,12 @@ function App() {
                 <div className="function-compare-grid">
                   <article className="compare-card">
                     <span className="panel-label">DuckDuckGo 这一页在演示什么</span>
-                    <p className="compare-title">这是一个免 key 的零点击答案接口，不是完整网页搜索引擎结果页</p>
+                    <p className="compare-title">这是一个“手搓展示版搜索器”：前端会参考多种来源，再按关键词匹配做 TopK</p>
                     <p>
-                      它更适合拿来做教学展示：输入一个主题词，看看搜索接口能返回摘要、定义和相关主题。真正给 AI 做网页检索时，开发者更常接 Tavily、Exa、Serper 这类搜索 API。
+                      这页的目标不是复刻完整搜索引擎，而是让你直观看到“搜索源可以有很多个，结果还可以被重新排序”。所以它会优先参考 DuckDuckGo，再补 Wikipedia 和站内说明，最后按相关度给你一个展示版 TopK。
+                    </p>
+                    <p className="compare-subtitle">
+                      所以像“system prompt”“Python”“Alan Turing”这类词条型查询通常更容易命中；像“刘亦菲”这种中文人名，DuckDuckGo 不一定会直接给摘要，但 Wikipedia 或其他来源仍然可能补上内容。
                     </p>
                   </article>
                 </div>
@@ -1500,19 +1760,41 @@ function App() {
                         />
                       </label>
 
-                      <div className="search-actions">
+                    <div className="search-actions">
                         <button className="button button-primary search-button" type="submit">
                           开始搜索
                         </button>
-                        <p className="search-helper">这一步直接从前端请求 DuckDuckGo Instant Answer API。</p>
+                        <p className="search-helper">
+                          这一步会并行参考 DuckDuckGo、Wikipedia 和站内课程说明，再按关键词相关度做一个展示版 TopK 排序。
+                        </p>
                       </div>
                     </form>
 
+                    <div className="search-chip-row">
+                      {["system prompt", "RAG", "Python", "Alan Turing", "北京"].map((example) => (
+                        <button
+                          className="search-chip"
+                          key={example}
+                          onClick={() => {
+                            setSearchQuery(example);
+                            void runDuckDuckGoSearch(example);
+                          }}
+                          type="button"
+                        >
+                          {example}
+                        </button>
+                      ))}
+                    </div>
+
                     <div className="search-request-card">
-                      <span className="function-context-label">request preview</span>
-                      <pre className="compare-pre">{`GET https://api.duckduckgo.com/?q=${encodeURIComponent(
-                        searchQuery,
-                      )}&format=json&no_html=1&callback=...`}</pre>
+                      <span className="function-context-label">aggregation preview</span>
+                      <pre className="compare-pre">{`sources = [
+  "DuckDuckGo Instant Answer",
+  "Wikipedia",
+  "站内课程说明"
+]
+query = "${searchQuery}"
+topK = ${searchLimit}`}</pre>
                     </div>
                   </section>
 
@@ -1548,16 +1830,16 @@ function App() {
                     {searchStatus === "success" ? (
                       <div className="search-results-stack">
                         <article className="search-summary-card">
-                          <span className="panel-label">摘要</span>
+                          <span className="panel-label">Top 1 · {searchSourceLabel}</span>
                           <h2>{searchHeading || searchQuery}</h2>
                           <p>
                             {searchSummary ||
                               "这一条查询没有返回明显的摘要，但仍然可能返回相关主题。"}
                           </p>
                           {searchSource ? (
-                            <a className="search-link" href={searchSource} rel="noreferrer" target="_blank">
+                              <a className="search-link" href={searchSource} rel="noreferrer" target="_blank">
                               查看来源
-                            </a>
+                              </a>
                           ) : null}
                         </article>
 
@@ -1565,7 +1847,9 @@ function App() {
                           {searchItems.length > 0 ? (
                             searchItems.map((item, index) => (
                               <article className="search-item-card" key={`${item.title}-${index}`}>
-                                <span className="panel-label">相关主题 {index + 1}</span>
+                                <span className="panel-label">
+                                  Top {index + 2} · {item.source}
+                                </span>
                                 <h3>{item.title}</h3>
                                 <p>{item.text}</p>
                                 {item.url ? (
@@ -1577,7 +1861,14 @@ function App() {
                             ))
                           ) : (
                             <div className="search-empty">
-                              <p>这次查询没有明显的 Related Topics，可以换一个更像百科词条的主题试试。</p>
+                              <p>
+                                {!hasSearchContent
+                                  ? "这次连聚合兜底都没有命中明显内容。你可以直接打开 DuckDuckGo 正常搜索页继续看网页结果。"
+                                  : "这次只有一条特别明显的命中结果；你可以换一个词再试，或者直接打开正常搜索页。"}
+                              </p>
+                              <a className="search-link" href={fullSearchUrl} rel="noreferrer" target="_blank">
+                                打开 DuckDuckGo 正常搜索页
+                              </a>
                             </div>
                           )}
                         </div>
