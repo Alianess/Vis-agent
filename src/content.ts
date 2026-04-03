@@ -128,9 +128,26 @@ export const functionCallDemos = [
     title: "什么时候该调用函数，而不是直接瞎猜",
     subtitle: "像“现在几点”这种问题，模型自己编一个很危险，最合适的做法就是调函数拿实时结果。",
     userInput: "现在几点了？请用中文告诉我当前系统时间。",
+    withoutToolsOutput:
+      "如果没有可调用的工具，一个更稳妥的模型通常只能告诉你：它无法直接读取你设备上的当前系统时间，因此没法保证给出的时间是真实最新的。",
     think:
       "用户要的是当前系统时间，这属于实时信息，不能靠记忆回答。应该调用 get_current_time，而不是直接生成一个可能过时的时间。",
     functionName: "get_current_time",
+    toolSpec: `[
+  {
+    "type": "function",
+    "name": "get_current_time",
+    "description": "读取当前系统时间",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "timezone": { "type": "string" },
+        "format": { "type": "string" }
+      },
+      "required": ["timezone"]
+    }
+  }
+]`,
     argumentsJson: `{
   "timezone": "Asia/Shanghai",
   "format": "yyyy-MM-dd HH:mm:ss"
@@ -144,9 +161,26 @@ export const functionCallDemos = [
     title: "模型先决定调用哪个工具，再根据结果组织回答",
     subtitle: "天气这类问题不只要调用函数，还要补出参数，比如城市和日期。",
     userInput: "帮我看一下明天上海天气，顺便告诉我要不要带伞。",
+    withoutToolsOutput:
+      "如果没有工具，模型最多只能给你一个泛泛建议，比如提醒你出门前查天气 App，但它没法真的知道“明天上海”的最新预报。",
     think:
       "用户需要最新天气，而且还带了一个生活建议。先调用 weather_lookup 拿到上海明天的天气数据，再根据降雨概率组织成中文回答。",
     functionName: "weather_lookup",
+    toolSpec: `[
+  {
+    "type": "function",
+    "name": "weather_lookup",
+    "description": "查询指定地点与日期的天气",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "location": { "type": "string" },
+        "date": { "type": "string" }
+      },
+      "required": ["location", "date"]
+    }
+  }
+]`,
     argumentsJson: `{
   "location": "上海",
   "date": "明天"
@@ -168,9 +202,26 @@ export const functionCallDemos = [
     title: "让模型去函数里拿资料，再回来回答用户",
     subtitle: "这类场景常见于产品助手、客服助手和知识库问答。",
     userInput: "这个教学网站里，结构化输出这一节主要想讲什么？",
+    withoutToolsOutput:
+      "如果没有检索工具，模型很可能只能按自己印象猜一个大概方向，但它并不能确认这是不是站内课程里真实写过的内容。",
     think:
       "这是站内知识，不该凭空回答。先调用 search_lessons，从课程文档里检索“结构化输出”相关内容，再基于命中的资料给一个简洁总结。",
     functionName: "search_lessons",
+    toolSpec: `[
+  {
+    "type": "function",
+    "name": "search_lessons",
+    "description": "检索站内课程文档",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": { "type": "string" },
+        "top_k": { "type": "integer" }
+      },
+      "required": ["query"]
+    }
+  }
+]`,
     argumentsJson: `{
   "query": "结构化输出 这一节 主要讲什么",
   "top_k": 2

@@ -1144,6 +1144,19 @@ function App() {
                   <p>{currentFunctionPreset.subtitle}</p>
                 </div>
 
+                <div className="function-compare-grid">
+                  <article className="compare-card compare-card-muted">
+                    <span className="panel-label">不带 tools</span>
+                    <p className="compare-title">模型只能靠已有知识或安全兜底来回答</p>
+                    <p>{currentFunctionPreset.withoutToolsOutput}</p>
+                  </article>
+                  <article className="compare-card">
+                    <span className="panel-label">带上 tools</span>
+                    <p className="compare-title">提示词上下文里先注入可调用函数清单</p>
+                    <pre className="compare-pre">{currentFunctionPreset.toolSpec}</pre>
+                  </article>
+                </div>
+
                 <div className="lesson-toolbar">
                   <button className="replay-button" onClick={replayFunctionDemo} type="button">
                     重新播放
@@ -1267,7 +1280,7 @@ function App() {
                   <article className="insight-card">
                     <span className="panel-label">这一页的重点</span>
                     <p>
-                      function calling 不是“模型会写代码”，而是模型先输出一个结构化调用意图，再由程序真正执行函数，并把结果送回模型继续回答。
+                      function calling 的前提，是模型在上下文里先看到了可用 tools 的定义。没有这份清单，它根本不知道自己可以调用什么；有了以后，才会决定是否发起函数调用。
                     </p>
                   </article>
                 </div>

@@ -377,7 +377,8 @@ code {
 .system-stage-stack,
 .structured-shell,
 .structured-inputs,
-.function-shell {
+.function-shell,
+.function-compare-grid {
   display: grid;
   gap: 18px;
 }
@@ -425,6 +426,11 @@ code {
   margin-top: 22px;
 }
 
+.function-compare-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
 .structured-inputs {
   align-content: start;
 }
@@ -439,6 +445,7 @@ code {
 .system-intro-card,
 .system-prompt-card,
 .schema-card,
+.compare-card,
 .placeholder-panel {
   padding: 22px;
   border-radius: 28px;
@@ -573,6 +580,40 @@ code {
     linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 249, 253, 0.92));
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
+}
+
+.compare-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.compare-card-muted {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 247, 250, 0.88));
+}
+
+.compare-title {
+  margin: 14px 0 10px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.compare-card p:last-child {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.compare-pre {
+  margin: 14px 0 0;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(11, 18, 32, 0.05);
+  white-space: pre-wrap;
+  color: var(--ink);
+  line-height: 1.7;
 }
 
 .system-intro-card {
@@ -1018,7 +1059,8 @@ code {
   .io-insights,
   .system-stage,
   .structured-shell,
-  .function-shell {
+  .function-shell,
+  .function-compare-grid {
     grid-template-columns: 1fr;
   }
 
