@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   apiCards,
   examplePanels,
@@ -8,13 +8,122 @@ import {
   stagePills,
 } from "./content";
 
+type Route = "home" | "learn";
+
+function getRouteFromHash(hash: string): Route {
+  return hash === "#/learn" ? "learn" : "home";
+}
+
 function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || "未配置";
+  const [route, setRoute] = useState<Route>(getRouteFromHash(window.location.hash));
   const [activeModule, setActiveModule] = useState("io");
   const [activeScenario, setActiveScenario] = useState(ioScenarios[0].id);
 
+  useEffect(() => {
+    const onHashChange = () => {
+      setRoute(getRouteFromHash(window.location.hash));
+    };
+
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
   const currentScenario =
     ioScenarios.find((scenario) => scenario.id === activeScenario) ?? ioScenarios[0];
+
+  if (route === "learn") {
+    return (
+      <div className="learn-page">
+        <header className="learn-topbar">
+          <a className="back-link" href="#/">
+            返回展示页
+          </a>
+          <div className="learn-brand">
+            <span className="brand-mark" />
+            <div>
+              <p className="brand-title">学习区</p>
+              <p className="brand-subtitle">从输入输出开始，一页页往后学</p>
+            </div>
+          </div>
+        </header>
+
+        <main className="learn-shell">
+          <aside className="workspace-sidebar" aria-label="模块导航">
+            {learningModules.map((module) => (
+              <button
+                className={`sidebar-item ${activeModule === module.id ? "is-active" : ""}`}
+                key={module.id}
+                onClick={() => setActiveModule(module.id)}
+                type="button"
+              >
+                <span className="sidebar-title">{module.title}</span>
+                <span className="sidebar-subtitle">{module.subtitle}</span>
+              </button>
+            ))}
+          </aside>
+
+          <section className="workspace-panel">
+            {activeModule === "io" ? (
+              <>
+                <div className="lesson-head">
+                  <p className="eyebrow">第一页</p>
+                  <h1>输入与输出</h1>
+                  <p>
+                    先不要急着讲系统提示词和工具。先看最朴素的一步：你给模型一条输入，它返回一条输出。
+                  </p>
+                </div>
+
+                <div className="scenario-tabs">
+                  {ioScenarios.map((scenario) => (
+                    <button
+                      className={`scenario-tab ${activeScenario === scenario.id ? "is-active" : ""}`}
+                      key={scenario.id}
+                      onClick={() => setActiveScenario(scenario.id)}
+                      type="button"
+                    >
+                      {scenario.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="io-visual">
+                  <article className="io-card io-input">
+                    <span className="io-label">输入</span>
+                    <p>{currentScenario.input}</p>
+                  </article>
+
+                  <div className="io-core" aria-hidden="true">
+                    <span className="io-core-ring" />
+                    <span className="io-core-dot" />
+                    <p>模型</p>
+                  </div>
+
+                  <article className="io-card io-output">
+                    <span className="io-label">输出</span>
+                    <p>{currentScenario.output}</p>
+                  </article>
+                </div>
+
+                <div className="io-note">
+                  <span className="panel-label">这一页在讲什么</span>
+                  <p>{currentScenario.note}</p>
+                </div>
+              </>
+            ) : (
+              <div className="placeholder-panel">
+                <span className="panel-label">下一步</span>
+                <h2>
+                  {learningModules.find((module) => module.id === activeModule)?.title ?? "模块"}
+                </h2>
+                <p>这个模块下一步继续开发。当前先把第一页“输入与输出”做扎实。</p>
+              </div>
+            )}
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="page">
@@ -30,7 +139,7 @@ function App() {
 
           <div className="nav-links">
             <a href="#topics">入门目录</a>
-            <a href="#workspace">学习工作区</a>
+            <a href="#example">示例</a>
             <a href="#api">API</a>
           </div>
         </nav>
@@ -46,16 +155,16 @@ function App() {
           <p className="eyebrow">从 Prompt 到 ReAct</p>
           <h1>先把 AI 入门部分，一次看明白。</h1>
           <p className="hero-text">
-            先讲透提示词、系统提示词、输出、结构化输出，再进入 Function Calling、DuckDuckGo、
-            搜索实现和 ReAct 循环。
+            提示词、系统提示词、输出、结构化输出、Function Calling、DuckDuckGo、搜索功能实现、ReAct 循环。
+            先把这 7 个点讲透，再往后走。
           </p>
 
           <div className="hero-actions">
-            <a className="button button-primary" href="#workspace">
-              进入第一课
+            <a className="button button-primary" href="#/learn">
+              开始学习
             </a>
-            <a className="button button-secondary" href="#topics">
-              先看入门目录
+            <a className="button button-secondary" href="#example">
+              先看示例
             </a>
           </div>
         </section>
@@ -96,84 +205,19 @@ function App() {
           </div>
         </section>
 
-        <section className="section workspace-section" id="workspace">
+        <section className="section" id="example">
           <div className="section-heading">
-            <p className="eyebrow">学习工作区</p>
-            <h2>左边切换模块，右边真正开始学。</h2>
+            <p className="eyebrow">开篇示例</p>
+            <h2>这一页先让你看到输入如何被约束，然后再进入学习区。</h2>
           </div>
 
-          <div className="workspace-shell">
-            <aside className="workspace-sidebar" aria-label="模块导航">
-              {learningModules.map((module) => (
-                <button
-                  className={`sidebar-item ${activeModule === module.id ? "is-active" : ""}`}
-                  key={module.id}
-                  onClick={() => setActiveModule(module.id)}
-                  type="button"
-                >
-                  <span className="sidebar-title">{module.title}</span>
-                  <span className="sidebar-subtitle">{module.subtitle}</span>
-                </button>
-              ))}
-            </aside>
-
-            <section className="workspace-panel">
-              {activeModule === "io" ? (
-                <>
-                  <div className="lesson-head">
-                    <p className="eyebrow">第一页</p>
-                    <h3>输入与输出</h3>
-                    <p>
-                      先不要急着讲系统提示词和工具。先看最朴素的一步：你给模型一条输入，它返回一条输出。
-                    </p>
-                  </div>
-
-                  <div className="scenario-tabs">
-                    {ioScenarios.map((scenario) => (
-                      <button
-                        className={`scenario-tab ${activeScenario === scenario.id ? "is-active" : ""}`}
-                        key={scenario.id}
-                        onClick={() => setActiveScenario(scenario.id)}
-                        type="button"
-                      >
-                        {scenario.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="io-visual">
-                    <article className="io-card io-input">
-                      <span className="io-label">输入</span>
-                      <p>{currentScenario.input}</p>
-                    </article>
-
-                    <div className="io-core" aria-hidden="true">
-                      <span className="io-core-ring" />
-                      <span className="io-core-dot" />
-                      <p>模型</p>
-                    </div>
-
-                    <article className="io-card io-output">
-                      <span className="io-label">输出</span>
-                      <p>{currentScenario.output}</p>
-                    </article>
-                  </div>
-
-                  <div className="io-note">
-                    <span className="panel-label">这一页在讲什么</span>
-                    <p>{currentScenario.note}</p>
-                  </div>
-                </>
-              ) : (
-                <div className="placeholder-panel">
-                  <span className="panel-label">下一步</span>
-                  <h3>
-                    {learningModules.find((module) => module.id === activeModule)?.title ?? "模块"}
-                  </h3>
-                  <p>这个模块下一步继续开发。当前先把第一页“输入与输出”做扎实。</p>
-                </div>
-              )}
-            </section>
+          <div className="topic-grid">
+            {examplePanels.map((panel) => (
+              <article className="topic-card" key={panel.label}>
+                <span className="topic-index">{panel.label}</span>
+                <pre className="topic-pre">{panel.value}</pre>
+              </article>
+            ))}
           </div>
         </section>
 
