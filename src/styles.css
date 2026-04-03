@@ -371,7 +371,8 @@ code {
 .topic-grid,
 .api-grid,
 .learn-shell,
-.io-visual {
+.lesson-stage,
+.io-insights {
   display: grid;
   gap: 18px;
 }
@@ -390,18 +391,23 @@ code {
   margin-top: 22px;
 }
 
-.io-visual {
-  grid-template-columns: 1fr 140px 1fr;
-  align-items: center;
+.lesson-stage {
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
   margin-top: 28px;
+}
+
+.io-insights {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 20px;
 }
 
 .topic-card,
 .api-card,
 .workspace-sidebar,
 .workspace-panel,
-.io-card,
-.io-note,
+.composer-card,
+.stream-card,
+.insight-card,
 .placeholder-panel {
   padding: 22px;
   border-radius: 28px;
@@ -475,6 +481,9 @@ code {
 
 .workspace-panel {
   min-height: 620px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.76), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(247, 249, 252, 0.92));
 }
 
 .lesson-head h1 {
@@ -509,13 +518,166 @@ code {
   color: #ffffff;
 }
 
-.io-card {
-  min-height: 220px;
+.composer-card,
+.stream-card {
+  min-height: 360px;
 }
 
-.io-card p {
-  margin: 16px 0 0;
-  font-size: 1rem;
+.composer-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 249, 253, 0.92)),
+    rgba(255, 255, 255, 0.9);
+}
+
+.composer-head,
+.stream-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.composer-tip,
+.stream-status,
+.composer-footer,
+.stream-value,
+.stream-output,
+.insight-card p {
+  color: var(--muted);
+}
+
+.composer-tip,
+.composer-footer,
+.stream-status {
+  font-size: 0.92rem;
+}
+
+.composer-body {
+  display: flex;
+  align-items: center;
+  padding: 26px 0;
+}
+
+.composer-body p {
+  margin: 0;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  line-height: 1.6;
+  letter-spacing: -0.03em;
+}
+
+.composer-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(11, 18, 32, 0.08);
+}
+
+.signal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: radial-gradient(circle, #6f88ff 0%, #a7b6ff 78%);
+  box-shadow: 0 0 0 6px rgba(111, 136, 255, 0.12);
+}
+
+.stream-card {
+  background:
+    linear-gradient(180deg, #0e1525 0%, #111b2f 100%);
+  border-color: rgba(106, 124, 161, 0.22);
+  color: #f7f9ff;
+  box-shadow:
+    0 28px 70px rgba(7, 10, 18, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.stream-status {
+  margin: 10px 0 0;
+  color: rgba(233, 238, 255, 0.7);
+}
+
+.stream-pulse {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.stream-pulse span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(182, 200, 255, 0.36);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.stream-pulse span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.stream-pulse span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+.stream-console {
+  display: grid;
+  gap: 16px;
+  margin-top: 30px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(6, 10, 20, 0.42);
+  border: 1px solid rgba(167, 182, 221, 0.14);
+}
+
+.stream-line {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.stream-key {
+  color: rgba(187, 200, 235, 0.54);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stream-value {
+  font-family: "Manrope", "Noto Sans SC", sans-serif;
+}
+
+.stream-line-live {
+  padding-top: 8px;
+  border-top: 1px solid rgba(167, 182, 221, 0.12);
+}
+
+.stream-output {
+  margin: 0;
+  min-height: 144px;
+  color: #f7f9ff;
+  line-height: 1.78;
+}
+
+.stream-caret {
+  display: inline-block;
+  width: 10px;
+  height: 1.1em;
+  margin-left: 3px;
+  vertical-align: -0.14em;
+  border-radius: 2px;
+  background: rgba(235, 240, 255, 0.88);
+  animation: blink 0.95s step-end infinite;
+}
+
+.insight-card {
+  min-height: 150px;
+}
+
+.insight-card p {
+  margin: 14px 0 0;
+  line-height: 1.75;
 }
 
 .io-core {
@@ -558,6 +720,25 @@ code {
   margin-top: 22px;
 }
 
+@keyframes pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.42;
+  }
+
+  50% {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
 @media (max-width: 1100px) {
   .topic-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -567,7 +748,8 @@ code {
 @media (max-width: 980px) {
   .api-grid,
   .learn-shell,
-  .io-visual {
+  .lesson-stage,
+  .io-insights {
     grid-template-columns: 1fr;
   }
 

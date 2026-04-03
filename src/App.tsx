@@ -19,6 +19,8 @@ function App() {
   const [route, setRoute] = useState<Route>(getRouteFromHash(window.location.hash));
   const [activeModule, setActiveModule] = useState("io");
   const [activeScenario, setActiveScenario] = useState(ioScenarios[0].id);
+  const [streamedOutput, setStreamedOutput] = useState("");
+  const [streamPhase, setStreamPhase] = useState<"reading" | "thinking" | "answering">("reading");
 
   useEffect(() => {
     const onHashChange = () => {
@@ -31,6 +33,43 @@ function App() {
 
   const currentScenario =
     ioScenarios.find((scenario) => scenario.id === activeScenario) ?? ioScenarios[0];
+
+  useEffect(() => {
+    if (route !== "learn" || activeModule !== "io") {
+      return;
+    }
+
+    setStreamedOutput("");
+    setStreamPhase("reading");
+
+    const phaseTimers = [
+      window.setTimeout(() => setStreamPhase("thinking"), 520),
+      window.setTimeout(() => setStreamPhase("answering"), 1120),
+    ];
+
+    let charIndex = 0;
+    const streamTimer = window.setInterval(() => {
+      if (charIndex >= currentScenario.output.length) {
+        window.clearInterval(streamTimer);
+        return;
+      }
+
+      charIndex += 2;
+      setStreamedOutput(currentScenario.output.slice(0, charIndex));
+    }, 28);
+
+    return () => {
+      phaseTimers.forEach((timer) => window.clearTimeout(timer));
+      window.clearInterval(streamTimer);
+    };
+  }, [route, activeModule, currentScenario]);
+
+  const phaseLabel =
+    streamPhase === "reading"
+      ? "正在读取输入"
+      : streamPhase === "thinking"
+        ? "正在组织表达"
+        : "正在生成输出";
 
   if (route === "learn") {
     return (
@@ -70,7 +109,7 @@ function App() {
                   <p className="eyebrow">第一页</p>
                   <h1>输入与输出</h1>
                   <p>
-                    先不要急着讲系统提示词和工具。先看最朴素的一步：你给模型一条输入，它返回一条输出。
+                    先只看最基础的一件事：你输入一句话，模型怎么一点点变成最终输出。别急着上工具，先把这一步看顺。
                   </p>
                 </div>
 
@@ -87,27 +126,63 @@ function App() {
                   ))}
                 </div>
 
-                <div className="io-visual">
-                  <article className="io-card io-input">
-                    <span className="io-label">输入</span>
-                    <p>{currentScenario.input}</p>
-                  </article>
+                <div className="lesson-stage">
+                  <section className="composer-card">
+                    <div className="composer-head">
+                      <span className="panel-label">输入</span>
+                      <span className="composer-tip">你喂给模型的原始文字</span>
+                    </div>
+                    <div className="composer-body">
+                      <p>{currentScenario.input}</p>
+                    </div>
+                    <div className="composer-footer">
+                      <span className="signal-dot" />
+                      <span>这一层还没有工具、没有搜索，只有文本输入。</span>
+                    </div>
+                  </section>
 
-                  <div className="io-core" aria-hidden="true">
-                    <span className="io-core-ring" />
-                    <span className="io-core-dot" />
-                    <p>模型</p>
-                  </div>
+                  <section className="stream-card" aria-live="polite">
+                    <div className="stream-head">
+                      <div>
+                        <span className="panel-label">模型输出中</span>
+                        <p className="stream-status">{phaseLabel}</p>
+                      </div>
+                      <div className="stream-pulse" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
 
-                  <article className="io-card io-output">
-                    <span className="io-label">输出</span>
-                    <p>{currentScenario.output}</p>
-                  </article>
+                    <div className="stream-console">
+                      <div className="stream-line">
+                        <span className="stream-key">input</span>
+                        <span className="stream-value">prompt</span>
+                      </div>
+                      <div className="stream-line">
+                        <span className="stream-key">mode</span>
+                        <span className="stream-value">text generation</span>
+                      </div>
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">output</span>
+                        <p className="stream-output">
+                          {streamedOutput}
+                          <span className="stream-caret" aria-hidden="true" />
+                        </p>
+                      </div>
+                    </div>
+                  </section>
                 </div>
 
-                <div className="io-note">
-                  <span className="panel-label">这一页在讲什么</span>
-                  <p>{currentScenario.note}</p>
+                <div className="io-insights">
+                  <article className="insight-card">
+                    <span className="panel-label">观察点</span>
+                    <p>{currentScenario.note}</p>
+                  </article>
+                  <article className="insight-card">
+                    <span className="panel-label">这一步的重点</span>
+                    <p>输入不是“随便问一句”这么简单。你写进输入里的对象、语气、结构要求，都会直接改变输出。</p>
+                  </article>
                 </div>
               </>
             ) : (
