@@ -6,6 +6,7 @@ import {
   introTopics,
   ioDemo,
   learningModules,
+  searchApiNotes,
   stagePills,
   structuredOutputDemo,
   systemPromptDemos,
@@ -13,8 +14,88 @@ import {
 
 type Route = "home" | "learn";
 
+type DuckDuckGoTopic = {
+  FirstURL?: string;
+  Result?: string;
+  Text?: string;
+  Name?: string;
+  Topics?: DuckDuckGoTopic[];
+};
+
+type DuckDuckGoResponse = {
+  AbstractText?: string;
+  AbstractURL?: string;
+  Answer?: string;
+  AnswerType?: string;
+  Definition?: string;
+  DefinitionURL?: string;
+  Heading?: string;
+  RelatedTopics?: DuckDuckGoTopic[];
+  Results?: DuckDuckGoTopic[];
+};
+
+type SearchItem = {
+  title: string;
+  text: string;
+  url?: string;
+};
+
 function getRouteFromHash(hash: string): Route {
   return hash === "#/learn" ? "learn" : "home";
+}
+
+function flattenDuckDuckGoTopics(topics: DuckDuckGoTopic[] = []): SearchItem[] {
+  return topics.flatMap((topic) => {
+    if (topic.Topics?.length) {
+      return flattenDuckDuckGoTopics(topic.Topics);
+    }
+
+    const title = topic.Text?.split(" - ")[0] || topic.Name || "相关主题";
+    return topic.Text
+      ? [
+          {
+            title,
+            text: topic.Text,
+            url: topic.FirstURL,
+          },
+        ]
+      : [];
+  });
+}
+
+function searchDuckDuckGoInstantAnswer(query: string): Promise<DuckDuckGoResponse> {
+  return new Promise((resolve, reject) => {
+    const callbackName = `ddgCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement("script");
+    const callbackStore = window as unknown as Record<string, unknown>;
+    const cleanup = () => {
+      delete callbackStore[callbackName];
+      script.remove();
+    };
+
+    callbackStore[callbackName] = (data: DuckDuckGoResponse) => {
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("DuckDuckGo 请求失败"));
+    };
+
+    const params = new URLSearchParams({
+      q: query,
+      format: "json",
+      pretty: "1",
+      no_redirect: "1",
+      no_html: "1",
+      skip_disambig: "0",
+      callback: callbackName,
+    });
+
+    script.src = `https://api.duckduckgo.com/?${params.toString()}`;
+    document.body.appendChild(script);
+  });
 }
 
 function App() {
@@ -65,6 +146,16 @@ function App() {
     "typing" | "thinking" | "calling" | "result" | "answering" | "done"
   >("typing");
   const [isFunctionThinkCollapsed, setIsFunctionThinkCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("system prompt");
+  const [searchLimit, setSearchLimit] = useState(5);
+  const [searchStatus, setSearchStatus] = useState<"idle" | "loading" | "success" | "error">(
+    "idle",
+  );
+  const [searchError, setSearchError] = useState("");
+  const [searchHeading, setSearchHeading] = useState("");
+  const [searchSummary, setSearchSummary] = useState("");
+  const [searchSource, setSearchSource] = useState("");
+  const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -614,6 +705,49 @@ function App() {
   const replayFunctionDemo = () => {
     setFunctionRunSeed((value) => value + 1);
   };
+
+  const runDuckDuckGoSearch = async (query = searchQuery) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      setSearchStatus("error");
+      setSearchError("先输入一个主题词，再发起搜索。");
+      setSearchItems([]);
+      setSearchSummary("");
+      setSearchHeading("");
+      setSearchSource("");
+      return;
+    }
+
+    setSearchStatus("loading");
+    setSearchError("");
+
+    try {
+      const data = await searchDuckDuckGoInstantAnswer(trimmedQuery);
+      const related = flattenDuckDuckGoTopics([
+        ...(data.Results ?? []),
+        ...(data.RelatedTopics ?? []),
+      ]).slice(0, searchLimit);
+
+      setSearchHeading(data.Heading || trimmedQuery);
+      setSearchSummary(data.AbstractText || data.Answer || data.Definition || "");
+      setSearchSource(data.AbstractURL || data.DefinitionURL || "");
+      setSearchItems(related);
+      setSearchStatus("success");
+    } catch (error) {
+      setSearchStatus("error");
+      setSearchError(error instanceof Error ? error.message : "搜索失败");
+      setSearchItems([]);
+      setSearchSummary("");
+      setSearchHeading("");
+      setSearchSource("");
+    }
+  };
+
+  useEffect(() => {
+    if (route === "learn" && activeModule === "search" && searchStatus === "idle") {
+      void runDuckDuckGoSearch("system prompt");
+    }
+  }, [route, activeModule, searchStatus]);
 
   if (route === "learn") {
     return (
@@ -1306,6 +1440,173 @@ function App() {
                     <span className="panel-label">这一页的重点</span>
                     <p>
                       function calling 的前提，是模型在上下文里先看到了可用 tools 的定义。没有这份清单，它根本不知道自己可以调用什么；有了以后，才会决定是否发起函数调用。
+                    </p>
+                  </article>
+                </div>
+              </>
+            ) : activeModule === "search" ? (
+              <>
+                <div className="lesson-head">
+                  <p className="eyebrow">第五页</p>
+                  <h1>搜索与 DuckDuckGo</h1>
+                  <p>
+                    模型并不天然知道最新网页信息，所以很多时候要先走搜索。这一页先用 DuckDuckGo 做一个可直接运行的前端搜索演示，再顺手认识 Tavily 和其他搜索 API。
+                  </p>
+                </div>
+
+                <div className="function-compare-grid">
+                  <article className="compare-card">
+                    <span className="panel-label">DuckDuckGo 这一页在演示什么</span>
+                    <p className="compare-title">这是一个免 key 的零点击答案接口，不是完整网页搜索引擎结果页</p>
+                    <p>
+                      它更适合拿来做教学展示：输入一个主题词，看看搜索接口能返回摘要、定义和相关主题。真正给 AI 做网页检索时，开发者更常接 Tavily、Exa、Serper 这类搜索 API。
+                    </p>
+                  </article>
+                </div>
+
+                <div className="search-shell">
+                  <section className="search-control-card">
+                    <div className="composer-head">
+                      <span className="panel-label">真实搜索演示</span>
+                    </div>
+
+                    <form
+                      className="search-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void runDuckDuckGoSearch();
+                      }}
+                    >
+                      <label className="search-field">
+                        <span>主题词</span>
+                        <input
+                          onChange={(event) => setSearchQuery(event.target.value)}
+                          placeholder="例如：system prompt / RAG / LangChain"
+                          type="text"
+                          value={searchQuery}
+                        />
+                      </label>
+
+                      <label className="search-field">
+                        <span>展示数量</span>
+                        <input
+                          max={10}
+                          min={1}
+                          onChange={(event) =>
+                            setSearchLimit(Math.max(1, Math.min(10, Number(event.target.value) || 1)))
+                          }
+                          type="number"
+                          value={searchLimit}
+                        />
+                      </label>
+
+                      <div className="search-actions">
+                        <button className="button button-primary search-button" type="submit">
+                          开始搜索
+                        </button>
+                        <p className="search-helper">这一步直接从前端请求 DuckDuckGo Instant Answer API。</p>
+                      </div>
+                    </form>
+
+                    <div className="search-request-card">
+                      <span className="function-context-label">request preview</span>
+                      <pre className="compare-pre">{`GET https://api.duckduckgo.com/?q=${encodeURIComponent(
+                        searchQuery,
+                      )}&format=json&no_html=1&callback=...`}</pre>
+                    </div>
+                  </section>
+
+                  <section className="search-results-card">
+                    <div className="stream-head">
+                      <div>
+                        <span className="panel-label">返回结果</span>
+                        <p className="stream-status">
+                          {searchStatus === "loading"
+                            ? "正在请求 DuckDuckGo"
+                            : searchStatus === "error"
+                              ? "请求失败"
+                              : searchStatus === "success"
+                                ? "请求完成"
+                                : "等待搜索"}
+                        </p>
+                      </div>
+                      {searchStatus === "loading" ? (
+                        <div className="stream-pulse" aria-hidden="true">
+                          <span />
+                          <span />
+                          <span />
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {searchStatus === "error" ? (
+                      <div className="search-empty">
+                        <p>{searchError}</p>
+                      </div>
+                    ) : null}
+
+                    {searchStatus === "success" ? (
+                      <div className="search-results-stack">
+                        <article className="search-summary-card">
+                          <span className="panel-label">摘要</span>
+                          <h2>{searchHeading || searchQuery}</h2>
+                          <p>
+                            {searchSummary ||
+                              "这一条查询没有返回明显的摘要，但仍然可能返回相关主题。"}
+                          </p>
+                          {searchSource ? (
+                            <a className="search-link" href={searchSource} rel="noreferrer" target="_blank">
+                              查看来源
+                            </a>
+                          ) : null}
+                        </article>
+
+                        <div className="search-related-grid">
+                          {searchItems.length > 0 ? (
+                            searchItems.map((item, index) => (
+                              <article className="search-item-card" key={`${item.title}-${index}`}>
+                                <span className="panel-label">相关主题 {index + 1}</span>
+                                <h3>{item.title}</h3>
+                                <p>{item.text}</p>
+                                {item.url ? (
+                                  <a className="search-link" href={item.url} rel="noreferrer" target="_blank">
+                                    打开条目
+                                  </a>
+                                ) : null}
+                              </article>
+                            ))
+                          ) : (
+                            <div className="search-empty">
+                              <p>这次查询没有明显的 Related Topics，可以换一个更像百科词条的主题试试。</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+                  </section>
+                </div>
+
+                <div className="provider-grid">
+                  {searchApiNotes.map((item) => (
+                    <article className="topic-card" key={item.title}>
+                      <span className="panel-label">同类能力</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.body}</p>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="io-insights">
+                  <article className="insight-card">
+                    <span className="panel-label">观察点</span>
+                    <p>
+                      搜索 API 的共同点是“把外部信息拿回来”，但它们拿回来的世界不一样。有的偏网页摘要，有的偏开发者检索，有的偏平台内内容。
+                    </p>
+                  </article>
+                  <article className="insight-card">
+                    <span className="panel-label">这一页的重点</span>
+                    <p>
+                      DuckDuckGo 这一页最重要的不是结果有多全，而是让人直观看到：当模型需要外部信息时，搜索接口会先把信息取回来，再交给后续流程继续处理。
                     </p>
                   </article>
                 </div>

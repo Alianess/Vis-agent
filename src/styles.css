@@ -378,7 +378,11 @@ code {
 .structured-shell,
 .structured-inputs,
 .function-shell,
-.function-compare-grid {
+.function-compare-grid,
+.search-shell,
+.provider-grid,
+.search-related-grid,
+.search-results-stack {
   display: grid;
   gap: 18px;
 }
@@ -426,9 +430,23 @@ code {
   margin-top: 22px;
 }
 
+.search-shell {
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  margin-top: 22px;
+}
+
 .function-compare-grid {
   grid-template-columns: 1fr;
   margin-top: 18px;
+}
+
+.provider-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 20px;
+}
+
+.search-related-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .structured-inputs {
@@ -446,6 +464,11 @@ code {
 .system-prompt-card,
 .schema-card,
 .compare-card,
+.search-control-card,
+.search-results-card,
+.search-summary-card,
+.search-item-card,
+.search-request-card,
 .placeholder-panel {
   padding: 22px;
   border-radius: 28px;
@@ -620,6 +643,93 @@ code {
   white-space: pre-wrap;
   color: var(--ink);
   line-height: 1.7;
+}
+
+.search-control-card,
+.search-results-card,
+.search-summary-card,
+.search-item-card,
+.search-request-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.search-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.search-field {
+  display: grid;
+  gap: 8px;
+}
+
+.search-field span {
+  font-weight: 700;
+}
+
+.search-field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  font: inherit;
+}
+
+.search-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.search-button {
+  min-height: 46px;
+}
+
+.search-helper,
+.search-summary-card p,
+.search-item-card p,
+.search-empty p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.search-request-card {
+  margin-top: 18px;
+}
+
+.search-results-stack {
+  margin-top: 18px;
+}
+
+.search-summary-card h2,
+.search-item-card h3 {
+  margin: 14px 0 10px;
+  letter-spacing: -0.03em;
+}
+
+.search-link {
+  display: inline-flex;
+  margin-top: 12px;
+  color: #3557d4;
+  font-weight: 700;
+}
+
+.search-empty {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(11, 18, 32, 0.03);
 }
 
 .system-intro-card {
@@ -1138,7 +1248,10 @@ code {
   .system-stage,
   .structured-shell,
   .function-shell,
-  .function-compare-grid {
+  .function-compare-grid,
+  .search-shell,
+  .provider-grid,
+  .search-related-grid {
     grid-template-columns: 1fr;
   }
 

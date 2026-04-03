@@ -329,6 +329,21 @@ export const functionCallDemos = [
   },
 ];
 
+export const searchApiNotes = [
+  {
+    title: "DuckDuckGo Instant Answer",
+    body: "适合做免 key 的前端展示。它更像零点击答案接口，会给摘要、相关主题、定义等信息，但不是完整网页搜索结果 API。",
+  },
+  {
+    title: "Tavily / Exa / Serper",
+    body: "更像给 AI 和开发者用的搜索 API，适合做网页检索、RAG 和搜索增强。通常会提供更稳定的结果结构和更明确的参数控制。",
+  },
+  {
+    title: "微博 / 小红书 / 抖音搜索 API",
+    body: "这类更常见于第三方平台数据 API 或 scraper API。它们搜的不是全网网页，而是平台内内容，字段和稳定性也往往更平台化。",
+  },
+];
+
 export const apiCards = [
   {
     title: "前端",
