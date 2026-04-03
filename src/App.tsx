@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   apiCards,
   examplePanels,
+  functionCallDemos,
   introTopics,
   ioDemo,
   learningModules,
@@ -52,6 +53,18 @@ function App() {
   >("typing");
   const [isNaturalThinkCollapsed, setIsNaturalThinkCollapsed] = useState(false);
   const [isJsonThinkCollapsed, setIsJsonThinkCollapsed] = useState(false);
+  const [activeFunctionPreset, setActiveFunctionPreset] = useState(functionCallDemos[0].id);
+  const [functionThinkEnabled, setFunctionThinkEnabled] = useState(true);
+  const [functionRunSeed, setFunctionRunSeed] = useState(0);
+  const [typedFunctionInput, setTypedFunctionInput] = useState("");
+  const [streamedFunctionThink, setStreamedFunctionThink] = useState("");
+  const [streamedFunctionArgs, setStreamedFunctionArgs] = useState("");
+  const [streamedFunctionResult, setStreamedFunctionResult] = useState("");
+  const [streamedFunctionOutput, setStreamedFunctionOutput] = useState("");
+  const [functionPhase, setFunctionPhase] = useState<
+    "typing" | "thinking" | "calling" | "result" | "answering" | "done"
+  >("typing");
+  const [isFunctionThinkCollapsed, setIsFunctionThinkCollapsed] = useState(false);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -64,6 +77,8 @@ function App() {
 
   const currentSystemPreset =
     systemPromptDemos.find((preset) => preset.id === activeSystemPreset) ?? systemPromptDemos[0];
+  const currentFunctionPreset =
+    functionCallDemos.find((preset) => preset.id === activeFunctionPreset) ?? functionCallDemos[0];
 
   useEffect(() => {
     if (route !== "learn" || activeModule !== "io") {
@@ -369,6 +384,153 @@ function App() {
     };
   }, [route, activeModule, structuredThinkEnabled, structuredRunSeed]);
 
+  useEffect(() => {
+    if (route !== "learn" || activeModule !== "function") {
+      return;
+    }
+
+    let cancelled = false;
+
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => {
+        window.setTimeout(resolve, ms);
+      });
+
+    const typeText = async (
+      text: string,
+      setter: (value: string) => void,
+      step = 1,
+      delay = 24,
+    ) => {
+      let current = "";
+
+      for (let index = 0; index < text.length; index += step) {
+        if (cancelled) {
+          return;
+        }
+
+        current = text.slice(0, index + step);
+        setter(current);
+        await sleep(delay);
+      }
+    };
+
+    const getDynamicToolResult = () => {
+      if (currentFunctionPreset.id !== "time") {
+        return currentFunctionPreset.toolResult ?? "";
+      }
+
+      const now = new Date();
+      const parts = new Intl.DateTimeFormat("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+        .formatToParts(now)
+        .reduce<Record<string, string>>((acc, part) => {
+          if (part.type !== "literal") {
+            acc[part.type] = part.value;
+          }
+          return acc;
+        }, {});
+
+      return `{
+  "timezone": "Asia/Shanghai",
+  "current_time": "${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}",
+  "weekday": "${now.toLocaleDateString("zh-CN", { weekday: "long", timeZone: "Asia/Shanghai" })}"
+}`;
+    };
+
+    const runDemo = async () => {
+      const toolResult = getDynamicToolResult();
+
+      setTypedFunctionInput("");
+      setStreamedFunctionThink("");
+      setStreamedFunctionArgs("");
+      setStreamedFunctionResult("");
+      setStreamedFunctionOutput("");
+      setIsFunctionThinkCollapsed(false);
+      setFunctionPhase("typing");
+
+      await typeText(currentFunctionPreset.userInput, setTypedFunctionInput, 1, 20);
+      if (cancelled) {
+        return;
+      }
+
+      if (functionThinkEnabled) {
+        setFunctionPhase("thinking");
+        await typeText(
+          `<think>\n${currentFunctionPreset.think}\n</think>`,
+          setStreamedFunctionThink,
+          2,
+          16,
+        );
+        if (cancelled) {
+          return;
+        }
+
+        await sleep(420);
+        if (cancelled) {
+          return;
+        }
+
+        setIsFunctionThinkCollapsed(true);
+      }
+
+      setFunctionPhase("calling");
+      await typeText(currentFunctionPreset.argumentsJson, setStreamedFunctionArgs, 2, 14);
+      if (cancelled) {
+        return;
+      }
+
+      await sleep(200);
+      if (cancelled) {
+        return;
+      }
+
+      setFunctionPhase("result");
+      await typeText(toolResult, setStreamedFunctionResult, 2, 16);
+      if (cancelled) {
+        return;
+      }
+
+      await sleep(200);
+      if (cancelled) {
+        return;
+      }
+
+      setFunctionPhase("answering");
+      const finalOutput =
+        currentFunctionPreset.id === "time"
+          ? `现在是北京时间 ${toolResult.match(/"current_time": "([^"]+)"/)?.[1] ?? ""}，${toolResult.match(/"weekday": "([^"]+)"/)?.[1] ?? ""}。`
+          : currentFunctionPreset.output ?? "";
+      await typeText(finalOutput, setStreamedFunctionOutput, 2, 18);
+      if (cancelled) {
+        return;
+      }
+
+      setFunctionPhase("done");
+    };
+
+    void runDemo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    route,
+    activeModule,
+    activeFunctionPreset,
+    functionThinkEnabled,
+    functionRunSeed,
+    currentFunctionPreset,
+  ]);
+
   const phaseLabel =
     streamPhase === "typing"
       ? "正在输入问题"
@@ -430,6 +592,27 @@ function App() {
 
   const replayStructuredDemo = () => {
     setStructuredRunSeed((value) => value + 1);
+  };
+
+  const functionPhaseLabel =
+    functionPhase === "typing"
+      ? "正在输入问题"
+      : functionPhase === "thinking"
+        ? "正在判断是否要调用函数"
+        : functionPhase === "calling"
+          ? "正在补齐函数参数"
+          : functionPhase === "result"
+            ? "正在接收函数结果"
+            : functionPhase === "answering"
+              ? "正在组织最终回答"
+              : "输出完成";
+
+  const functionPhaseHint = functionThinkEnabled
+    ? "打开后，会先展示 <think>，再展示函数参数、返回值和最终回答。"
+    : "关闭后，会跳过思考流，直接演示函数调用过程。";
+
+  const replayFunctionDemo = () => {
+    setFunctionRunSeed((value) => value + 1);
   };
 
   if (route === "learn") {
@@ -926,6 +1109,165 @@ function App() {
                     <span className="panel-label">这一页的重点</span>
                     <p>
                       结构化输出的关键不是“看起来像 JSON”，而是字段稳定、键名稳定、程序可以直接拿去渲染、存库或继续传给下一个函数。
+                    </p>
+                  </article>
+                </div>
+              </>
+            ) : activeModule === "function" ? (
+              <>
+                <div className="lesson-head">
+                  <p className="eyebrow">第四页</p>
+                  <h1>Function Calling</h1>
+                  <p>
+                    这一页开始进入“模型不只是回答，而是先决定要不要调用工具”。关键不是函数本身，而是模型如何判断、补参数、拿结果、再回来回答。
+                  </p>
+                </div>
+
+                <div className="preset-switcher" role="tablist" aria-label="函数调用示例">
+                  {functionCallDemos.map((preset) => (
+                    <button
+                      aria-selected={activeFunctionPreset === preset.id}
+                      className={`preset-chip ${activeFunctionPreset === preset.id ? "is-active" : ""}`}
+                      key={preset.id}
+                      onClick={() => setActiveFunctionPreset(preset.id)}
+                      role="tab"
+                      type="button"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="system-intro-card">
+                  <span className="panel-label">当前示例</span>
+                  <h2>{currentFunctionPreset.title}</h2>
+                  <p>{currentFunctionPreset.subtitle}</p>
+                </div>
+
+                <div className="lesson-toolbar">
+                  <button className="replay-button" onClick={replayFunctionDemo} type="button">
+                    重新播放
+                  </button>
+                  <button
+                    aria-pressed={functionThinkEnabled}
+                    className={`think-switch ${functionThinkEnabled ? "is-on" : ""}`}
+                    onClick={() => setFunctionThinkEnabled((value) => !value)}
+                    type="button"
+                  >
+                    <span className="think-switch-copy">
+                      <strong>思考开关</strong>
+                      <small>{functionPhaseHint}</small>
+                    </span>
+                    <span className="think-switch-track" aria-hidden="true">
+                      <span className="think-switch-thumb" />
+                    </span>
+                  </button>
+                </div>
+
+                <div className="function-shell">
+                  <section className="composer-card">
+                    <div className="composer-head">
+                      <span className="panel-label">用户输入</span>
+                    </div>
+                    <div className="composer-body function-input-body">
+                      <p>
+                        {typedFunctionInput}
+                        {functionPhase === "typing" ? (
+                          <span className="stream-caret composer-caret" aria-hidden="true" />
+                        ) : null}
+                      </p>
+                    </div>
+                  </section>
+
+                  <section className="stream-card" aria-live="polite">
+                    <div className="stream-head">
+                      <div>
+                        <span className="panel-label">函数调用流程</span>
+                        <p className="stream-status">{functionPhaseLabel}</p>
+                      </div>
+                      <div className="stream-pulse" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+
+                    <div className="stream-console">
+                      <div className="stream-line">
+                        <span className="stream-key">function</span>
+                        <span className="stream-value">{currentFunctionPreset.functionName}</span>
+                      </div>
+
+                      {functionThinkEnabled ? (
+                        <div className="stream-think-wrap">
+                          <button
+                            className="think-block-head"
+                            onClick={() => setIsFunctionThinkCollapsed((value) => !value)}
+                            type="button"
+                          >
+                            <span className="stream-key">think</span>
+                            <span className="think-block-state">
+                              {isFunctionThinkCollapsed ? "已折叠" : "展开中"}
+                            </span>
+                          </button>
+
+                          {isFunctionThinkCollapsed ? (
+                            <div className="think-collapsed">
+                              <p>函数决策思路已展示完成，点击上方可以重新展开。</p>
+                            </div>
+                          ) : (
+                            <pre className="think-stream">
+                              {streamedFunctionThink}
+                              {functionPhase === "thinking" ? (
+                                <span className="stream-caret" aria-hidden="true" />
+                              ) : null}
+                            </pre>
+                          )}
+                        </div>
+                      ) : null}
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">arguments</span>
+                        <pre className="stream-output stream-output-json">
+                          {streamedFunctionArgs}
+                          {functionPhase === "calling" ? (
+                            <span className="stream-caret" aria-hidden="true" />
+                          ) : null}
+                        </pre>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">{currentFunctionPreset.resultLabel}</span>
+                        <pre className="stream-output stream-output-json">
+                          {streamedFunctionResult}
+                          {functionPhase === "result" ? (
+                            <span className="stream-caret" aria-hidden="true" />
+                          ) : null}
+                        </pre>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">final</span>
+                        <p className="stream-output">
+                          {streamedFunctionOutput}
+                          {functionPhase === "answering" ? (
+                            <span className="stream-caret" aria-hidden="true" />
+                          ) : null}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="io-insights">
+                  <article className="insight-card">
+                    <span className="panel-label">观察点</span>
+                    <p>{currentFunctionPreset.note}</p>
+                  </article>
+                  <article className="insight-card">
+                    <span className="panel-label">这一页的重点</span>
+                    <p>
+                      function calling 不是“模型会写代码”，而是模型先输出一个结构化调用意图，再由程序真正执行函数，并把结果送回模型继续回答。
                     </p>
                   </article>
                 </div>

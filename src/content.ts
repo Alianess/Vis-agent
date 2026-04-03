@@ -121,6 +121,73 @@ export const structuredOutputDemo = {
   note: "自然语言输出更适合人读，结构化输出更适合程序继续处理、筛选、存储和展示。",
 };
 
+export const functionCallDemos = [
+  {
+    id: "time",
+    label: "当前时间",
+    title: "什么时候该调用函数，而不是直接瞎猜",
+    subtitle: "像“现在几点”这种问题，模型自己编一个很危险，最合适的做法就是调函数拿实时结果。",
+    userInput: "现在几点了？请用中文告诉我当前系统时间。",
+    think:
+      "用户要的是当前系统时间，这属于实时信息，不能靠记忆回答。应该调用 get_current_time，而不是直接生成一个可能过时的时间。",
+    functionName: "get_current_time",
+    argumentsJson: `{
+  "timezone": "Asia/Shanghai",
+  "format": "yyyy-MM-dd HH:mm:ss"
+}`,
+    resultLabel: "函数返回",
+    note: "Function calling 最核心的一点，就是把“该查的”交给函数，把“该说的”交给模型。",
+  },
+  {
+    id: "weather",
+    label: "天气查询",
+    title: "模型先决定调用哪个工具，再根据结果组织回答",
+    subtitle: "天气这类问题不只要调用函数，还要补出参数，比如城市和日期。",
+    userInput: "帮我看一下明天上海天气，顺便告诉我要不要带伞。",
+    think:
+      "用户需要最新天气，而且还带了一个生活建议。先调用 weather_lookup 拿到上海明天的天气数据，再根据降雨概率组织成中文回答。",
+    functionName: "weather_lookup",
+    argumentsJson: `{
+  "location": "上海",
+  "date": "明天"
+}`,
+    resultLabel: "函数返回",
+    toolResult: `{
+  "location": "上海",
+  "forecast": "小雨转阴",
+  "temperature": "16-22°C",
+  "rain_probability": "72%"
+}`,
+    output:
+      "明天上海大概率会有一阵小雨，气温大概在 16 到 22 度之间。最好带一把伞，尤其如果你白天要出门久一点，会更稳妥。",
+    note: "这里模型不是自己查天气，而是先把地点和日期变成函数参数，再用返回值生成自然语言回答。",
+  },
+  {
+    id: "docs",
+    label: "文档检索",
+    title: "让模型去函数里拿资料，再回来回答用户",
+    subtitle: "这类场景常见于产品助手、客服助手和知识库问答。",
+    userInput: "这个教学网站里，结构化输出这一节主要想讲什么？",
+    think:
+      "这是站内知识，不该凭空回答。先调用 search_lessons，从课程文档里检索“结构化输出”相关内容，再基于命中的资料给一个简洁总结。",
+    functionName: "search_lessons",
+    argumentsJson: `{
+  "query": "结构化输出 这一节 主要讲什么",
+  "top_k": 2
+}`,
+    resultLabel: "函数返回",
+    toolResult: `{
+  "hits": [
+    "结构化输出这一页会对比自然语言结果和 JSON 结果。",
+    "核心目的是让学习者理解“能看”和“能编程”之间的区别。"
+  ]
+}`,
+    output:
+      "这一节主要想讲两件事：第一，同一个问题既可以输出成一段给人看的自然语言，也可以输出成固定字段的 JSON；第二，只有字段稳定了，程序才更容易继续渲染、存储或传给下一个函数。",
+    note: "这就是很多产品里的“AI 助手查知识库”原型：模型负责决定查什么，函数负责真的去拿资料。",
+  },
+];
+
 export const apiCards = [
   {
     title: "前端",

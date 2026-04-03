@@ -376,7 +376,8 @@ code {
 .system-stage,
 .system-stage-stack,
 .structured-shell,
-.structured-inputs {
+.structured-inputs,
+.function-shell {
   display: grid;
   gap: 18px;
 }
@@ -416,6 +417,11 @@ code {
 
 .structured-shell {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 22px;
+}
+
+.function-shell {
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
   margin-top: 22px;
 }
 
@@ -709,6 +715,10 @@ code {
 
 .structured-input-body {
   min-height: 180px;
+}
+
+.function-input-body {
+  min-height: 320px;
 }
 
 .schema-pre {
@@ -1007,7 +1017,8 @@ code {
   .lesson-stage,
   .io-insights,
   .system-stage,
-  .structured-shell {
+  .structured-shell,
+  .function-shell {
     grid-template-columns: 1fr;
   }
 
