@@ -81,7 +81,7 @@ function flattenDuckDuckGoTopics(topics: DuckDuckGoTopic[] = []): SearchItem[] {
             title,
             text: topic.Text,
             url: topic.FirstURL,
-            source: "DuckDuckGo Related Topics",
+            source: "相关主题源",
           },
         ]
       : [];
@@ -355,7 +355,7 @@ function App() {
     "typing" | "thinking" | "calling" | "result" | "answering" | "done"
   >("typing");
   const [isFunctionThinkCollapsed, setIsFunctionThinkCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("system prompt");
+  const [searchQuery, setSearchQuery] = useState("刘亦菲");
   const [searchLimit, setSearchLimit] = useState(5);
   const [searchStatus, setSearchStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle",
@@ -364,7 +364,7 @@ function App() {
   const [searchHeading, setSearchHeading] = useState("");
   const [searchSummary, setSearchSummary] = useState("");
   const [searchSource, setSearchSource] = useState("");
-  const [searchSourceLabel, setSearchSourceLabel] = useState("DuckDuckGo Instant Answer");
+  const [searchSourceLabel, setSearchSourceLabel] = useState("聚合搜索结果");
   const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
 
   useEffect(() => {
@@ -948,7 +948,7 @@ function App() {
           title: duckduckgoData.Heading || trimmedQuery,
           text: summaryText,
           url: summaryUrl,
-          source: "DuckDuckGo Instant Answer",
+          source: "网页答案源",
         });
       }
 
@@ -1002,7 +1002,7 @@ function App() {
 
   useEffect(() => {
     if (route === "learn" && activeModule === "search" && searchStatus === "idle") {
-      void runDuckDuckGoSearch("system prompt");
+      void runDuckDuckGoSearch("刘亦菲");
     }
   }, [route, activeModule, searchStatus]);
 
@@ -1705,21 +1705,21 @@ function App() {
               <>
                 <div className="lesson-head">
                   <p className="eyebrow">第五页</p>
-                  <h1>搜索与 DuckDuckGo</h1>
+                  <h1>搜索</h1>
                   <p>
-                    模型并不天然知道最新网页信息，所以很多时候要先走搜索。这一页先用 DuckDuckGo 做一个可直接运行的前端搜索演示，再顺手认识 Tavily 和其他搜索 API。
+                    模型并不天然知道最新网页信息，所以很多时候要先走搜索。这一页会用一个前端可运行的展示版聚合搜索器，带你看搜索结果是怎样被拿回来、再被重新组织的。
                   </p>
                 </div>
 
                 <div className="function-compare-grid">
                   <article className="compare-card">
-                    <span className="panel-label">DuckDuckGo 这一页在演示什么</span>
+                    <span className="panel-label">这一页在演示什么</span>
                     <p className="compare-title">这是一个“手搓展示版搜索器”：前端会参考多种来源，再按关键词匹配做 TopK</p>
                     <p>
-                      这页的目标不是复刻完整搜索引擎，而是让你直观看到“搜索源可以有很多个，结果还可以被重新排序”。所以它会优先参考 DuckDuckGo，再补 Wikipedia 和站内说明，最后按相关度给你一个展示版 TopK。
+                      这页的目标不是复刻完整搜索引擎，而是让你直观看到“搜索源可以有很多个，结果还可以被重新排序”。所以它会参考网页答案源、Wikipedia 和站内说明，最后按相关度给你一个展示版 TopK。
                     </p>
                     <p className="compare-subtitle">
-                      所以像“system prompt”“Python”“Alan Turing”这类词条型查询通常更容易命中；像“刘亦菲”这种中文人名，DuckDuckGo 不一定会直接给摘要，但 Wikipedia 或其他来源仍然可能补上内容。
+                      所以像“system prompt”“Python”“Alan Turing”这类词条型查询通常更容易命中；像“刘亦菲”这种中文人名，单一来源不一定会直接给摘要，但其他来源仍然可能补上内容。
                     </p>
                   </article>
                 </div>
@@ -1760,12 +1760,12 @@ function App() {
                         />
                       </label>
 
-                    <div className="search-actions">
+                      <div className="search-actions">
                         <button className="button button-primary search-button" type="submit">
                           开始搜索
                         </button>
                         <p className="search-helper">
-                          这一步会并行参考 DuckDuckGo、Wikipedia 和站内课程说明，再按关键词相关度做一个展示版 TopK 排序。
+                          这一步会并行参考多个来源，再按关键词相关度做一个展示版 TopK 排序。
                         </p>
                       </div>
                     </form>
@@ -1789,7 +1789,7 @@ function App() {
                     <div className="search-request-card">
                       <span className="function-context-label">aggregation preview</span>
                       <pre className="compare-pre">{`sources = [
-  "DuckDuckGo Instant Answer",
+  "网页答案源",
   "Wikipedia",
   "站内课程说明"
 ]
@@ -1804,7 +1804,7 @@ topK = ${searchLimit}`}</pre>
                         <span className="panel-label">返回结果</span>
                         <p className="stream-status">
                           {searchStatus === "loading"
-                            ? "正在请求 DuckDuckGo"
+                            ? "正在请求搜索源"
                             : searchStatus === "error"
                               ? "请求失败"
                               : searchStatus === "success"
@@ -1863,11 +1863,11 @@ topK = ${searchLimit}`}</pre>
                             <div className="search-empty">
                               <p>
                                 {!hasSearchContent
-                                  ? "这次连聚合兜底都没有命中明显内容。你可以直接打开 DuckDuckGo 正常搜索页继续看网页结果。"
-                                  : "这次只有一条特别明显的命中结果；你可以换一个词再试，或者直接打开正常搜索页。"}
+                                  ? "这次连聚合兜底都没有命中明显内容。你可以直接打开搜索结果页继续看网页结果。"
+                                  : "这次只有一条特别明显的命中结果；你可以换一个词再试，或者直接打开搜索结果页。"}
                               </p>
                               <a className="search-link" href={fullSearchUrl} rel="noreferrer" target="_blank">
-                                打开 DuckDuckGo 正常搜索页
+                                打开搜索结果页
                               </a>
                             </div>
                           )}
@@ -1897,7 +1897,7 @@ topK = ${searchLimit}`}</pre>
                   <article className="insight-card">
                     <span className="panel-label">这一页的重点</span>
                     <p>
-                      DuckDuckGo 这一页最重要的不是结果有多全，而是让人直观看到：当模型需要外部信息时，搜索接口会先把信息取回来，再交给后续流程继续处理。
+                      这一页最重要的不是结果有多全，而是让人直观看到：当模型需要外部信息时，搜索接口会先把信息取回来，再交给后续流程继续处理。
                     </p>
                   </article>
                 </div>
@@ -1947,7 +1947,7 @@ topK = ${searchLimit}`}</pre>
           <p className="eyebrow">从 Prompt 到 ReAct</p>
           <h1>先把 AI 入门部分，一次看明白。</h1>
           <p className="hero-text">
-            提示词、系统提示词、输出、结构化输出、Function Calling、搜索与 DuckDuckGo、ReAct 循环。
+            提示词、系统提示词、输出、结构化输出、Function Calling、搜索、ReAct 循环。
             先把这 6 个点讲透，再往后走。
           </p>
 

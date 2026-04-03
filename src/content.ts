@@ -3,7 +3,7 @@ export const introTopics = [
   { index: "02", title: "系统提示词", body: "再看角色、目标和边界怎样影响回答。" },
   { index: "03", title: "结构化输出", body: "再把回答从“能看”变成“能编程”。" },
   { index: "04", title: "Function Calling", body: "模型怎样决定调用外部函数。" },
-  { index: "05", title: "搜索与 DuckDuckGo", body: "为什么需要搜索，以及搜索请求怎样发出、返回、回填。" },
+  { index: "05", title: "搜索", body: "为什么需要搜索，以及搜索请求怎样发出、返回、回填。" },
   { index: "06", title: "ReAct 循环", body: "推理、行动、观察，Agent 从这里开始。" },
 ];
 
@@ -37,7 +37,7 @@ export const learningModules = [
   { id: "system", title: "系统提示词", subtitle: "角色、目标、边界" },
   { id: "structured", title: "结构化输出", subtitle: "JSON 与可编程结果" },
   { id: "function", title: "Function Calling", subtitle: "函数调用与参数" },
-  { id: "search", title: "搜索与 DuckDuckGo", subtitle: "搜索为什么重要，以及请求怎样流转" },
+  { id: "search", title: "搜索", subtitle: "搜索为什么重要，以及请求怎样流转" },
   { id: "react", title: "ReAct 循环", subtitle: "Thought / Act / Observation" },
 ];
 
@@ -331,8 +331,8 @@ export const functionCallDemos = [
 
 export const searchApiNotes = [
   {
-    title: "DuckDuckGo Instant Answer",
-    body: "适合做免 key 的前端展示。它更像零点击答案接口，会给摘要、相关主题、定义等信息，但不是完整网页搜索结果 API。",
+    title: "DuckDuckGo",
+    body: "DuckDuckGo 本身是一个面向用户的搜索引擎，强调隐私和简洁体验。开发里常会把它当成“搜索能力”的代表案例来讲，但真正落地时，接口形态和网站搜索页并不总是一回事。",
   },
   {
     title: "Tavily / Exa / Serper",
