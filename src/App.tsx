@@ -206,7 +206,6 @@ function App() {
                   <section className="composer-card">
                     <div className="composer-head">
                       <span className="panel-label">输入</span>
-                      <span className="composer-tip">问题会像聊天框里那样一字一字出现</span>
                     </div>
                     <div className="composer-body">
                       <p>
