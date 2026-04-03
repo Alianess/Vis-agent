@@ -9,26 +9,27 @@ export const introTopics = [
   { index: "08", title: "ReAct 循环", body: "推理、行动、观察，Agent 从这里开始。 " },
 ];
 
-export const stagePills = ["Prompt", "System", "Output", "JSON", "Function", "Search", "ReAct"];
+export const stagePills = ["提示词", "系统提示词", "输出", "结构化输出", "Function Calling", "搜索", "ReAct"];
 
 export const examplePanels = [
   {
     label: "提示词",
-    value: "给一个 AI 架构教学网站写一句首页副标题。",
+    value: "请用一句话解释什么是系统提示词。",
   },
   {
     label: "系统提示词",
-    value: "面向懂一点代码的小白。要求清楚、克制、不要卖弄术语。",
+    value: "你是一个面向初学者的 AI 入门老师。用中文回答，必须清楚、简短、不要使用术语堆砌。",
   },
   {
     label: "输出",
-    value: "把 AI 的工作方式，一层一层看明白。",
+    value: "系统提示词是在回答前先给模型设定角色、目标和边界的一段隐藏说明。",
   },
   {
     label: "结构化输出",
     value: `{
-  "headline": "把 AI 的工作方式看明白",
-  "subheadline": "从 Prompt 到 Agent，逐步建立一张清晰地图。"
+  "concept": "系统提示词",
+  "summary": "在回答前给模型设定角色、目标和边界",
+  "difficulty": "入门"
 }`,
   },
 ];
@@ -38,9 +39,9 @@ export const exampleCards = [
     title: "Function Calling",
     body: "当模型判断自己需要外部能力时，它不会直接编结果，而是先发起一个结构化函数调用。",
     code: `{
-  "name": "search_web",
+  "name": "search_duckduckgo",
   "arguments": {
-    "query": "DuckDuckGo 是什么"
+    "query": "系统提示词 和 提示词 有什么区别"
   }
 }`,
   },
