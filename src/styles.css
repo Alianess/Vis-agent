@@ -281,19 +281,20 @@ code {
 
 .stage {
   position: relative;
+  display: grid;
+  gap: 0;
   width: min(820px, 100%);
-  height: 400px;
+  min-height: 520px;
   margin: 86px auto 0;
   z-index: 2;
 }
 
 .stage-panel {
-  position: absolute;
-  left: 50%;
-  width: min(560px, calc(100% - 10px));
+  position: relative;
+  width: min(620px, calc(100% - 10px));
   padding: 20px 22px;
   border-radius: 30px;
-  transform: translateX(-50%);
+  transform: none;
 }
 
 .stage-panel pre {
@@ -304,24 +305,23 @@ code {
 }
 
 .stage-panel-1 {
-  top: 0;
+  margin: 0 auto;
   z-index: 4;
 }
 
 .stage-panel-2 {
-  top: 88px;
+  margin: -36px auto 0 18px;
   z-index: 3;
-  width: min(620px, calc(100% - 10px));
 }
 
 .stage-panel-3 {
-  top: 182px;
+  margin: -34px 52px 0 auto;
   z-index: 2;
-  width: min(500px, calc(100% - 10px));
+  width: min(560px, calc(100% - 10px));
 }
 
 .stage-panel-4 {
-  top: 270px;
+  margin: -38px auto 0 42px;
   z-index: 1;
   width: min(600px, calc(100% - 10px));
   background: rgba(255, 255, 255, 0.66);
@@ -1337,18 +1337,12 @@ code {
   }
 
   .stage {
-    height: 470px;
+    min-height: auto;
+    gap: 12px;
   }
 
-  .stage-panel-2 {
-    top: 100px;
-  }
-
-  .stage-panel-3 {
-    top: 214px;
-  }
-
-  .stage-panel-4 {
-    top: 328px;
+  .stage-panel {
+    width: 100%;
+    margin: 0;
   }
 }
