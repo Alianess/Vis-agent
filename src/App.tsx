@@ -285,6 +285,18 @@ function scoreSearchItem(query: string, item: SearchItem): number {
     }
   }
 
+  if (item.source === "网页答案源") {
+    score += 18;
+  } else if (item.source === "相关主题源") {
+    score += 12;
+  } else if (item.source === "Wikipedia 中文") {
+    score += 5;
+  } else if (item.source === "Wikipedia English") {
+    score += 3;
+  } else if (item.source === "站内课程" || item.source === "搜索 API 说明") {
+    score -= 6;
+  }
+
   return score;
 }
 
@@ -968,11 +980,12 @@ function App() {
           ]
         : [];
 
+      const externalItems = [...duckduckgoItems, ...wikipediaItems, ...fallbackItems];
+      const backupItems = externalItems.length >= Math.max(2, searchLimit) ? [] : buildLocalSearchItems();
+
       const ranked = rankSearchItems(trimmedQuery, [
-        ...duckduckgoItems,
-        ...wikipediaItems,
-        ...fallbackItems,
-        ...buildLocalSearchItems(),
+        ...externalItems,
+        ...backupItems,
       ], searchLimit);
 
       const featured = ranked[0];
