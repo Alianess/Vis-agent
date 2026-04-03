@@ -495,27 +495,99 @@ code {
   margin-top: 10px;
 }
 
-.scenario-tabs {
+.lesson-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
   margin-top: 24px;
 }
 
-.scenario-tab {
-  min-height: 40px;
-  padding: 0 14px;
+.replay-button {
+  min-height: 42px;
+  padding: 0 16px;
   border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.74);
-  color: var(--muted);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  font-weight: 700;
   cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
 }
 
-.scenario-tab.is-active {
-  background: #0b1220;
-  border-color: #0b1220;
-  color: #ffffff;
+.replay-button:hover,
+.think-switch:hover {
+  transform: translateY(-1px);
+}
+
+.think-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 8px 10px 8px 16px;
+  border: 1px solid rgba(11, 18, 32, 0.1);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.think-switch.is-on {
+  border-color: rgba(107, 128, 214, 0.24);
+  background: rgba(243, 247, 255, 0.94);
+}
+
+.think-switch-copy {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.think-switch-copy strong {
+  font-size: 0.94rem;
+}
+
+.think-switch-copy small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.think-switch-track {
+  position: relative;
+  width: 50px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(11, 18, 32, 0.12);
+  transition: background-color 180ms ease;
+}
+
+.think-switch.is-on .think-switch-track {
+  background: rgba(107, 128, 214, 0.92);
+}
+
+.think-switch-thumb {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18);
+  transition: transform 180ms ease;
+}
+
+.think-switch.is-on .think-switch-thumb {
+  transform: translateX(20px);
 }
 
 .composer-card,
@@ -565,6 +637,10 @@ code {
   font-size: clamp(1.25rem, 2vw, 1.7rem);
   line-height: 1.6;
   letter-spacing: -0.03em;
+}
+
+.composer-caret {
+  background: rgba(11, 18, 32, 0.9);
 }
 
 .composer-footer {
@@ -651,6 +727,49 @@ code {
 .stream-line-live {
   padding-top: 8px;
   border-top: 1px solid rgba(167, 182, 221, 0.12);
+}
+
+.stream-think-wrap {
+  display: grid;
+  gap: 10px;
+}
+
+.think-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.think-block-state {
+  color: rgba(187, 200, 235, 0.64);
+  font-size: 0.86rem;
+}
+
+.think-stream,
+.think-collapsed {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(167, 182, 221, 0.12);
+}
+
+.think-stream {
+  color: rgba(231, 237, 255, 0.9);
+  white-space: pre-wrap;
+  line-height: 1.75;
+}
+
+.think-collapsed p {
+  margin: 0;
+  color: rgba(210, 221, 255, 0.72);
+  line-height: 1.7;
 }
 
 .stream-output {
@@ -769,6 +888,15 @@ code {
 
   .workspace-panel {
     min-height: auto;
+  }
+
+  .lesson-toolbar {
+    align-items: stretch;
+  }
+
+  .think-switch {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 

@@ -3,7 +3,7 @@ import {
   apiCards,
   examplePanels,
   introTopics,
-  ioScenarios,
+  ioDemo,
   learningModules,
   stagePills,
 } from "./content";
@@ -18,9 +18,15 @@ function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || "未配置";
   const [route, setRoute] = useState<Route>(getRouteFromHash(window.location.hash));
   const [activeModule, setActiveModule] = useState("io");
-  const [activeScenario, setActiveScenario] = useState(ioScenarios[0].id);
+  const [thinkEnabled, setThinkEnabled] = useState(true);
+  const [runSeed, setRunSeed] = useState(0);
+  const [typedInput, setTypedInput] = useState("");
+  const [streamedThink, setStreamedThink] = useState("");
   const [streamedOutput, setStreamedOutput] = useState("");
-  const [streamPhase, setStreamPhase] = useState<"reading" | "thinking" | "answering">("reading");
+  const [streamPhase, setStreamPhase] = useState<
+    "typing" | "reading" | "thinking" | "answering" | "done"
+  >("typing");
+  const [isThinkCollapsed, setIsThinkCollapsed] = useState(false);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -31,45 +37,108 @@ function App() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
-  const currentScenario =
-    ioScenarios.find((scenario) => scenario.id === activeScenario) ?? ioScenarios[0];
-
   useEffect(() => {
     if (route !== "learn" || activeModule !== "io") {
       return;
     }
 
-    setStreamedOutput("");
-    setStreamPhase("reading");
+    let cancelled = false;
 
-    const phaseTimers = [
-      window.setTimeout(() => setStreamPhase("thinking"), 520),
-      window.setTimeout(() => setStreamPhase("answering"), 1120),
-    ];
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => {
+        window.setTimeout(resolve, ms);
+      });
 
-    let charIndex = 0;
-    const streamTimer = window.setInterval(() => {
-      if (charIndex >= currentScenario.output.length) {
-        window.clearInterval(streamTimer);
+    const typeText = async (
+      text: string,
+      setter: (value: string) => void,
+      step = 1,
+      delay = 24,
+    ) => {
+      let current = "";
+
+      for (let index = 0; index < text.length; index += step) {
+        if (cancelled) {
+          return;
+        }
+
+        current = text.slice(0, index + step);
+        setter(current);
+        await sleep(delay);
+      }
+    };
+
+    const runDemo = async () => {
+      setTypedInput("");
+      setStreamedThink("");
+      setStreamedOutput("");
+      setIsThinkCollapsed(false);
+      setStreamPhase("typing");
+
+      await typeText(ioDemo.input, setTypedInput, 1, 22);
+      if (cancelled) {
         return;
       }
 
-      charIndex += 2;
-      setStreamedOutput(currentScenario.output.slice(0, charIndex));
-    }, 28);
+      setStreamPhase("reading");
+      await sleep(380);
+      if (cancelled) {
+        return;
+      }
+
+      if (thinkEnabled) {
+        setStreamPhase("thinking");
+        await typeText(`<think>\n${ioDemo.think}\n</think>`, setStreamedThink, 2, 18);
+        if (cancelled) {
+          return;
+        }
+
+        await sleep(520);
+        if (cancelled) {
+          return;
+        }
+
+        setIsThinkCollapsed(true);
+        await sleep(260);
+        if (cancelled) {
+          return;
+        }
+      }
+
+      setStreamPhase("answering");
+      await typeText(ioDemo.output, setStreamedOutput, 2, 20);
+      if (cancelled) {
+        return;
+      }
+
+      setStreamPhase("done");
+    };
+
+    void runDemo();
 
     return () => {
-      phaseTimers.forEach((timer) => window.clearTimeout(timer));
-      window.clearInterval(streamTimer);
+      cancelled = true;
     };
-  }, [route, activeModule, currentScenario]);
+  }, [route, activeModule, thinkEnabled, runSeed]);
 
   const phaseLabel =
-    streamPhase === "reading"
-      ? "正在读取输入"
-      : streamPhase === "thinking"
-        ? "正在组织表达"
-        : "正在生成输出";
+    streamPhase === "typing"
+      ? "正在输入问题"
+      : streamPhase === "reading"
+        ? "正在读取输入"
+        : streamPhase === "thinking"
+          ? "正在展开思考"
+          : streamPhase === "answering"
+            ? "正在流式输出"
+            : "输出完成";
+
+  const phaseHint = thinkEnabled
+    ? "打开后，会先展示 <think> 思考流，再自动折叠。"
+    : "关闭后，会跳过思考流，直接开始生成回答。";
+
+  const replayDemo = () => {
+    setRunSeed((value) => value + 1);
+  };
 
   if (route === "learn") {
     return (
@@ -113,27 +182,39 @@ function App() {
                   </p>
                 </div>
 
-                <div className="scenario-tabs">
-                  {ioScenarios.map((scenario) => (
-                    <button
-                      className={`scenario-tab ${activeScenario === scenario.id ? "is-active" : ""}`}
-                      key={scenario.id}
-                      onClick={() => setActiveScenario(scenario.id)}
-                      type="button"
-                    >
-                      {scenario.label}
-                    </button>
-                  ))}
+                <div className="lesson-toolbar">
+                  <button className="replay-button" onClick={replayDemo} type="button">
+                    重新播放
+                  </button>
+                  <button
+                    aria-pressed={thinkEnabled}
+                    className={`think-switch ${thinkEnabled ? "is-on" : ""}`}
+                    onClick={() => setThinkEnabled((value) => !value)}
+                    type="button"
+                  >
+                    <span className="think-switch-copy">
+                      <strong>思考开关</strong>
+                      <small>{phaseHint}</small>
+                    </span>
+                    <span className="think-switch-track" aria-hidden="true">
+                      <span className="think-switch-thumb" />
+                    </span>
+                  </button>
                 </div>
 
                 <div className="lesson-stage">
                   <section className="composer-card">
                     <div className="composer-head">
                       <span className="panel-label">输入</span>
-                      <span className="composer-tip">你喂给模型的原始文字</span>
+                      <span className="composer-tip">问题会像聊天框里那样一字一字出现</span>
                     </div>
                     <div className="composer-body">
-                      <p>{currentScenario.input}</p>
+                      <p>
+                        {typedInput}
+                        {streamPhase === "typing" ? (
+                          <span className="stream-caret composer-caret" aria-hidden="true" />
+                        ) : null}
+                      </p>
                     </div>
                     <div className="composer-footer">
                       <span className="signal-dot" />
@@ -157,17 +238,50 @@ function App() {
                     <div className="stream-console">
                       <div className="stream-line">
                         <span className="stream-key">input</span>
-                        <span className="stream-value">prompt</span>
+                        <span className="stream-value">text prompt</span>
                       </div>
                       <div className="stream-line">
                         <span className="stream-key">mode</span>
-                        <span className="stream-value">text generation</span>
+                        <span className="stream-value">
+                          {thinkEnabled ? "reasoning + streaming" : "streaming only"}
+                        </span>
                       </div>
+
+                      {thinkEnabled ? (
+                        <div className="stream-think-wrap">
+                          <button
+                            className="think-block-head"
+                            onClick={() => setIsThinkCollapsed((value) => !value)}
+                            type="button"
+                          >
+                            <span className="stream-key">think</span>
+                            <span className="think-block-state">
+                              {isThinkCollapsed ? "已折叠" : "展开中"}
+                            </span>
+                          </button>
+
+                          {isThinkCollapsed ? (
+                            <div className="think-collapsed">
+                              <p>思考流已展示完成并自动折叠，点击上方可以重新展开查看。</p>
+                            </div>
+                          ) : (
+                            <pre className="think-stream">
+                              {streamedThink}
+                              {streamPhase === "thinking" ? (
+                                <span className="stream-caret" aria-hidden="true" />
+                              ) : null}
+                            </pre>
+                          )}
+                        </div>
+                      ) : null}
+
                       <div className="stream-line stream-line-live">
                         <span className="stream-key">output</span>
                         <p className="stream-output">
                           {streamedOutput}
-                          <span className="stream-caret" aria-hidden="true" />
+                          {streamPhase === "answering" ? (
+                            <span className="stream-caret" aria-hidden="true" />
+                          ) : null}
                         </p>
                       </div>
                     </div>
@@ -177,7 +291,7 @@ function App() {
                 <div className="io-insights">
                   <article className="insight-card">
                     <span className="panel-label">观察点</span>
-                    <p>{currentScenario.note}</p>
+                    <p>{ioDemo.note}</p>
                   </article>
                   <article className="insight-card">
                     <span className="panel-label">这一步的重点</span>
