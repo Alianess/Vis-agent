@@ -1,5 +1,6 @@
 import {
   audiences,
+  highlightCards,
   learningPath,
   modules,
   openingDemo,
@@ -11,95 +12,92 @@ function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || "未配置";
 
   return (
-    <div className="site-shell">
+    <div className="page-shell">
       <header className="hero">
         <nav className="topbar">
-          <div className="brand">
-            <span className="brand-mark">AI</span>
+          <div className="brand-lockup">
+            <span className="brand-dot" />
             <div>
-              <p className="brand-title">看懂 AI 与 Agent 架构</p>
-              <p className="brand-subtitle">中文可视化教学项目</p>
+              <p className="brand-title">AI 架构可视化</p>
+              <p className="brand-subtitle">给懂一点代码、但还没真正看懂 AI 的人</p>
             </div>
           </div>
 
           <div className="topbar-links">
+            <a href="#demo">开篇示例</a>
             <a href="#path">学习路径</a>
-            <a href="#modules">模块概览</a>
-            <a href="#api">API 接法</a>
+            <a href="#api">API</a>
           </div>
         </nav>
 
-        <div className="hero-grid">
-          <section className="hero-copy">
-            <p className="eyebrow">从 Prompt 到 Agent，一步一步看懂</p>
-            <h1>
-              不是为了把你训练成框架用户，
-              <br />
-              而是帮你先建立一张真正清晰的 AI 架构地图。
-            </h1>
-            <p className="hero-body">
-              这个项目面向懂一点代码、但还没有真正建立整体认知的人。
-              你会先看懂 Prompt、大模型、System Prompt、结构化输出，
-              再逐步进入工具调用、Skill、MCP、记忆与 RAG。
-            </p>
+        <div className="hero-copy">
+          <p className="eyebrow">从 Prompt 到 Agent</p>
+          <h1>把 AI 的工作方式，一层一层看明白。</h1>
+          <p className="hero-body">
+            如果你会一点代码，但总觉得 Prompt、RAG、Tool Call、MCP、Agent
+            这些词始终连不起来，这个站点就是给你的。
+            它不会一上来灌一堆框架名，而是先把最基本的输入、输出、角色、接口和运行链路讲清楚。
+          </p>
 
-            <div className="hero-actions">
-              <a className="primary-button" href="#path">
-                从零开始学习
-              </a>
-              <a className="secondary-button" href="#modules">
-                直接看 Agent 全景图
-              </a>
-            </div>
-          </section>
+          <div className="hero-actions">
+            <a className="primary-button" href="#path">
+              从头开始看
+            </a>
+            <a className="secondary-button" href="#modules">
+              先看全景
+            </a>
+          </div>
+        </div>
 
-          <aside className="hero-panel" aria-label="架构预览">
-            <div className="signal-card">
-              <span className="signal-step">01</span>
-              <div>
-                <h2>Prompt</h2>
-                <p>先知道怎样告诉模型“你要做什么”。</p>
-              </div>
+        <div className="hero-stage" aria-label="首页预览">
+          <div className="hero-window">
+            <div className="window-bar">
+              <span />
+              <span />
+              <span />
             </div>
-            <div className="signal-card">
-              <span className="signal-step">02</span>
-              <div>
-                <h2>System Prompt</h2>
-                <p>再理解模型为什么会“扮演角色”和守规则。</p>
-              </div>
+            <div className="window-body">
+              <div className="flow-chip">Prompt</div>
+              <div className="flow-arrow" />
+              <div className="flow-chip">System Prompt</div>
+              <div className="flow-arrow" />
+              <div className="flow-chip">Structured Output</div>
+              <div className="flow-arrow" />
+              <div className="flow-chip accent">Agent Runtime</div>
             </div>
-            <div className="signal-card">
-              <span className="signal-step">03</span>
-              <div>
-                <h2>结构化输出</h2>
-                <p>再看模型怎么从聊天，变成可编程接口。</p>
-              </div>
-            </div>
-            <div className="signal-card accent">
-              <span className="signal-step">04</span>
-              <div>
-                <h2>Agent Runtime</h2>
-                <p>最后再把工具、记忆、检索、循环全部接起来。</p>
-              </div>
-            </div>
-          </aside>
+          </div>
+
+          <div className="hero-note">
+            <span>推荐路径</span>
+            <p>先看模型怎么回答，再看应用怎么把模型变成一个真正能工作的系统。</p>
+          </div>
         </div>
       </header>
 
       <main className="content">
-        <section className="facts-grid" aria-label="项目特征">
+        <section className="quick-facts" aria-label="项目摘要">
           {quickFacts.map((fact) => (
             <article className="fact-card" key={fact.label}>
               <p className="fact-label">{fact.label}</p>
-              <h3>{fact.value}</h3>
+              <h2>{fact.value}</h2>
               <p>{fact.note}</p>
             </article>
           ))}
         </section>
 
-        <section className="narrative-grid">
+        <section className="spotlight-grid">
+          {highlightCards.map((card) => (
+            <article className="spotlight-card" key={card.step}>
+              <span className="spotlight-step">{card.step}</span>
+              <h2>{card.title}</h2>
+              <p>{card.description}</p>
+            </article>
+          ))}
+        </section>
+
+        <section className="section-grid">
           {sections.map((section) => (
-            <article className="narrative-card" id={section.id} key={section.id}>
+            <article className="section-card" id={section.id} key={section.id}>
               <p className="eyebrow">{section.eyebrow}</p>
               <h2>{section.title}</h2>
               <p>{section.body}</p>
@@ -107,10 +105,46 @@ function App() {
           ))}
         </section>
 
+        <section className="demo-section" id="demo">
+          <div className="section-heading">
+            <p className="eyebrow">开篇示例</p>
+            <h2>同一个请求，为什么加了规则之后，结果会明显变好。</h2>
+          </div>
+
+          <div className="request-card">
+            <span className="request-badge">用户请求</span>
+            <p>{openingDemo.request}</p>
+          </div>
+
+          <div className="demo-grid">
+            <article className="demo-card">
+              <p className="eyebrow">Prompt</p>
+              <h3>先给一个最普通的要求</h3>
+              <pre className="code-block">{openingDemo.plainPrompt}</pre>
+              <div className="demo-result">
+                <span>模型输出</span>
+                <p>{openingDemo.plainResponse}</p>
+              </div>
+            </article>
+
+            <article className="demo-card">
+              <p className="eyebrow">System Prompt</p>
+              <h3>再告诉模型它是谁、面对谁、该怎么说</h3>
+              <pre className="code-block">{openingDemo.systemPrompt}</pre>
+            </article>
+
+            <article className="demo-card">
+              <p className="eyebrow">Structured Output</p>
+              <h3>最后约束结果格式，让输出变成可编程接口</h3>
+              <pre className="code-block">{openingDemo.structuredResponse}</pre>
+            </article>
+          </div>
+        </section>
+
         <section className="audience-section">
           <div className="section-heading">
-            <p className="eyebrow">谁需要装什么</p>
-            <h2>用户和开发者不是一类人，环境要求也不一样。</h2>
+            <p className="eyebrow">怎么使用</p>
+            <h2>普通学习者直接看站点，开发者才需要环境。</h2>
           </div>
 
           <div className="audience-grid">
@@ -118,7 +152,7 @@ function App() {
               <article className="audience-card" key={audience.title}>
                 <h3>{audience.title}</h3>
                 <p>{audience.description}</p>
-                <ul className="audience-list">
+                <ul>
                   {audience.items.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
@@ -128,46 +162,10 @@ function App() {
           </div>
         </section>
 
-        <section className="demo-section">
-          <div className="section-heading">
-            <p className="eyebrow">开篇示例</p>
-            <h2>同一个需求，为什么加了规则之后输出会完全不同。</h2>
-          </div>
-
-          <div className="demo-request">
-            <span className="demo-chip">用户请求</span>
-            <p>{openingDemo.request}</p>
-          </div>
-
-          <div className="demo-grid">
-            <article className="demo-card">
-              <p className="eyebrow">01 Prompt</p>
-              <h3>只有任务，没有额外控制</h3>
-              <p>{openingDemo.promptOnly}</p>
-              <div className="demo-output">
-                <span>输出示例</span>
-                <p>{openingDemo.plainResponse}</p>
-              </div>
-            </article>
-
-            <article className="demo-card">
-              <p className="eyebrow">02 System Prompt</p>
-              <h3>给模型角色、目标和文风边界</h3>
-              <pre className="demo-code">{openingDemo.systemPrompt}</pre>
-            </article>
-
-            <article className="demo-card">
-              <p className="eyebrow">03 Structured Output</p>
-              <h3>让结果从“能看”变成“能编程”</h3>
-              <pre className="demo-code">{openingDemo.structuredResponse}</pre>
-            </article>
-          </div>
-        </section>
-
         <section className="path-section" id="path">
           <div className="section-heading">
-            <p className="eyebrow">推荐学习路径</p>
-            <h2>由浅入深，不一次性灌太多概念。</h2>
+            <p className="eyebrow">学习路径</p>
+            <h2>先建立直觉，再进入架构。</h2>
           </div>
 
           <ol className="path-list">
@@ -183,7 +181,7 @@ function App() {
         <section className="modules-section" id="modules">
           <div className="section-heading">
             <p className="eyebrow">模块概览</p>
-            <h2>第一版先把最关键的几层讲透。</h2>
+            <h2>第一版先把最关键的六层讲透。</h2>
           </div>
 
           <div className="module-grid">
@@ -199,25 +197,23 @@ function App() {
 
         <section className="api-section" id="api">
           <div className="section-heading">
-            <p className="eyebrow">静态站如何接 API</p>
-            <h2>页面静态，能力动态。</h2>
+            <p className="eyebrow">静态站也能接 API</p>
+            <h2>界面可以很轻，后端能力可以是真实的。</h2>
           </div>
 
           <div className="api-grid">
             <article className="api-card">
-              <h3>前端职责</h3>
-              <p>负责展示、讲解、交互与可视化，不保存模型密钥。</p>
+              <h3>前端</h3>
+              <p>GitHub Pages 托管静态页面，负责讲解、可视化和交互体验。</p>
             </article>
             <article className="api-card">
-              <h3>后端职责</h3>
-              <p>负责调用大模型、Embedding、向量检索、工具执行与密钥管理。</p>
+              <h3>后端</h3>
+              <p>单独部署 Python / FastAPI，用来接 OpenAI、Embedding、Chroma 和后续工具。</p>
             </article>
             <article className="api-card">
               <h3>当前 API 地址</h3>
               <p className="api-base">{apiBase}</p>
-              <p className="api-note">
-                通过 `VITE_API_BASE_URL` 配置。GitHub Pages 部署前端，后端单独部署即可。
-              </p>
+              <p className="api-note">通过 `VITE_API_BASE_URL` 注入，不把密钥放进前端。</p>
             </article>
           </div>
         </section>
