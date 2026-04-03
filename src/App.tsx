@@ -975,8 +975,8 @@ function App() {
           <p className="eyebrow">从 Prompt 到 ReAct</p>
           <h1>先把 AI 入门部分，一次看明白。</h1>
           <p className="hero-text">
-            提示词、系统提示词、输出、结构化输出、Function Calling、DuckDuckGo、搜索功能实现、ReAct 循环。
-            先把这 7 个点讲透，再往后走。
+            提示词、系统提示词、输出、结构化输出、Function Calling、搜索与 DuckDuckGo、ReAct 循环。
+            先把这 6 个点讲透，再往后走。
           </p>
 
           <div className="hero-actions">
@@ -1011,7 +1011,7 @@ function App() {
         <section className="section" id="topics">
           <div className="section-heading">
             <p className="eyebrow">入门目录</p>
-            <h2>这一阶段先学这 7 个点。</h2>
+            <h2>这一阶段先学这 6 个点。</h2>
           </div>
 
           <div className="topic-grid">
