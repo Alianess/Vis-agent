@@ -16,26 +16,33 @@ function App() {
           </div>
 
           <div className="nav-links">
-            <a href="#example">示例</a>
             <a href="#topics">入门目录</a>
+            <a href="#example">示例</a>
             <a href="#api">API</a>
           </div>
         </nav>
 
+        <div className="hero-atmosphere" aria-hidden="true">
+          <span className="glow glow-1" />
+          <span className="glow glow-2" />
+          <span className="glow glow-3" />
+          <div className="grid-orbit" />
+        </div>
+
         <section className="hero-copy">
           <p className="eyebrow">从 Prompt 到 ReAct</p>
-          <h1>先把入门部分讲透。</h1>
+          <h1>先把 AI 入门部分，一次看明白。</h1>
           <p className="hero-text">
-            提示词、系统提示词、输出、结构化输出、Function Calling、DuckDuckGo、搜索实现、ReAct
-            循环。先把这 8 个点看明白，再进入更完整的 Agent 架构。
+            提示词、系统提示词、输出、结构化输出、Function Calling、DuckDuckGo、搜索功能实现、ReAct 循环。
+            先把这 8 个点讲透，再往后走。
           </p>
 
           <div className="hero-actions">
-            <a className="button button-primary" href="#topics">
-              看入门目录
+            <a className="button button-primary" href="#example">
+              先看一个例子
             </a>
-            <a className="button button-secondary" href="#example">
-              先看示例
+            <a className="button button-secondary" href="#topics">
+              再看入门目录
             </a>
           </div>
         </section>

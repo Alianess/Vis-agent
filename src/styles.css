@@ -64,6 +64,8 @@ code {
   min-height: 96vh;
   padding: 28px;
   border-radius: 36px;
+  position: relative;
+  overflow: hidden;
 }
 
 .nav {
@@ -113,6 +115,8 @@ code {
   max-width: 860px;
   margin: 110px auto 0;
   text-align: center;
+  position: relative;
+  z-index: 2;
 }
 
 .eyebrow {
@@ -132,7 +136,7 @@ code {
 
 .hero-copy h1 {
   margin: 0 auto;
-  max-width: 8ch;
+  max-width: 8.5ch;
   font-size: clamp(4rem, 10vw, 7.8rem);
   line-height: 0.94;
   font-weight: 800;
@@ -193,6 +197,7 @@ code {
   width: min(820px, 100%);
   height: 400px;
   margin: 86px auto 0;
+  z-index: 2;
 }
 
 .stage-panel {
@@ -202,6 +207,7 @@ code {
   padding: 20px 22px;
   border-radius: 30px;
   transform: translateX(-50%);
+  backdrop-filter: blur(20px);
 }
 
 .stage-panel pre {
@@ -253,6 +259,60 @@ code {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 28px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-atmosphere {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(18px);
+}
+
+.glow-1 {
+  top: -2%;
+  left: -6%;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.98), rgba(208, 220, 255, 0.12) 66%, transparent 74%);
+}
+
+.glow-2 {
+  top: 12%;
+  right: -4%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 244, 221, 0.9), rgba(255, 225, 174, 0.12) 66%, transparent 74%);
+}
+
+.glow-3 {
+  bottom: 8%;
+  left: 14%;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(223, 231, 255, 0.7), rgba(196, 212, 255, 0.08) 68%, transparent 76%);
+}
+
+.grid-orbit {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 920px;
+  height: 920px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.6), transparent 56%),
+    repeating-radial-gradient(circle, rgba(11, 18, 32, 0.045) 0 1px, transparent 1px 32px);
+  mask-image: radial-gradient(circle, rgba(0, 0, 0, 0.76) 20%, transparent 72%);
+  opacity: 0.9;
 }
 
 .main {
