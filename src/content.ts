@@ -98,6 +98,31 @@ export const systemPromptDemos = [
   },
 ];
 
+export const structuredOutputDemo = {
+  userInput: "请把这本书整理给我：书名《人类简史》，作者尤瓦尔·赫拉利，主题是文明演化、认知革命和人类社会。",
+  naturalThink:
+    "普通回答只需要把信息讲清楚即可，不必强约束字段。用自然语言总结这本书讲什么、为什么值得看，保持像推荐书单里的介绍语气。",
+  naturalOutput:
+    "《人类简史》是尤瓦尔·赫拉利写的一本讲人类文明如何一路演化到今天的通识作品，重点会讲认知革命、农业革命和现代社会是怎么一步步塑造人的。它适合想快速建立“人类社会是怎么走到今天”的整体视角的人。",
+  schema: `{
+  "title": "string",
+  "author": "string",
+  "topics": ["string"],
+  "summary": "string",
+  "recommended_for": "string"
+}`,
+  structuredThink:
+    "这次不是自由发挥，而是严格按字段填值。先识别书名和作者，再把主题拆成 topics 数组，summary 保持一句概括，recommended_for 用一句人群描述。不要输出字段外内容。",
+  structuredOutput: `{
+  "title": "人类简史",
+  "author": "尤瓦尔·赫拉利",
+  "topics": ["文明演化", "认知革命", "人类社会"],
+  "summary": "一本用宏观视角解释人类文明如何形成与变化的通识作品。",
+  "recommended_for": "想快速建立历史与社会整体理解的入门读者"
+}`,
+  note: "自然语言输出更适合人读，结构化输出更适合程序继续处理、筛选、存储和展示。",
+};
+
 export const apiCards = [
   {
     title: "前端",

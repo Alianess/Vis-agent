@@ -374,7 +374,9 @@ code {
 .lesson-stage,
 .io-insights,
 .system-stage,
-.system-stage-stack {
+.system-stage-stack,
+.structured-shell,
+.structured-inputs {
   display: grid;
   gap: 18px;
 }
@@ -412,6 +414,15 @@ code {
   align-content: start;
 }
 
+.structured-shell {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 22px;
+}
+
+.structured-inputs {
+  align-content: start;
+}
+
 .topic-card,
 .api-card,
 .workspace-sidebar,
@@ -421,6 +432,7 @@ code {
 .insight-card,
 .system-intro-card,
 .system-prompt-card,
+.schema-card,
 .placeholder-panel {
   padding: 22px;
   border-radius: 28px;
@@ -545,6 +557,14 @@ code {
 .system-prompt-card {
   border: 1px solid var(--line);
   background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.schema-card {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 249, 253, 0.92));
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
 }
@@ -685,6 +705,21 @@ code {
 
 .system-user-body {
   padding: 12px 0 0;
+}
+
+.structured-input-body {
+  min-height: 180px;
+}
+
+.schema-pre {
+  margin: 18px 0 0;
+  min-height: 220px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(11, 18, 32, 0.04);
+  color: var(--ink);
+  white-space: pre-wrap;
+  line-height: 1.75;
 }
 
 .composer-card {
@@ -871,6 +906,16 @@ code {
   line-height: 1.78;
 }
 
+.stream-output-json {
+  white-space: pre-wrap;
+  font-size: 0.95rem;
+}
+
+.structured-json-card {
+  background:
+    linear-gradient(180deg, #0c1322 0%, #0f1a30 100%);
+}
+
 .stream-caret {
   display: inline-block;
   width: 10px;
@@ -961,7 +1006,8 @@ code {
   .learn-shell,
   .lesson-stage,
   .io-insights,
-  .system-stage {
+  .system-stage,
+  .structured-shell {
     grid-template-columns: 1fr;
   }
 

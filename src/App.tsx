@@ -6,6 +6,7 @@ import {
   ioDemo,
   learningModules,
   stagePills,
+  structuredOutputDemo,
   systemPromptDemos,
 } from "./content";
 
@@ -39,6 +40,18 @@ function App() {
     "prompting" | "typing" | "reading" | "thinking" | "answering" | "done"
   >("prompting");
   const [isSystemThinkCollapsed, setIsSystemThinkCollapsed] = useState(false);
+  const [structuredThinkEnabled, setStructuredThinkEnabled] = useState(true);
+  const [structuredRunSeed, setStructuredRunSeed] = useState(0);
+  const [typedStructuredInput, setTypedStructuredInput] = useState("");
+  const [streamedNaturalThink, setStreamedNaturalThink] = useState("");
+  const [streamedNaturalOutput, setStreamedNaturalOutput] = useState("");
+  const [streamedStructuredThink, setStreamedStructuredThink] = useState("");
+  const [streamedStructuredOutput, setStreamedStructuredOutput] = useState("");
+  const [structuredPhase, setStructuredPhase] = useState<
+    "typing" | "reading" | "natural-thinking" | "natural-output" | "json-thinking" | "json-output" | "done"
+  >("typing");
+  const [isNaturalThinkCollapsed, setIsNaturalThinkCollapsed] = useState(false);
+  const [isJsonThinkCollapsed, setIsJsonThinkCollapsed] = useState(false);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -237,6 +250,125 @@ function App() {
     };
   }, [route, activeModule, activeSystemPreset, systemThinkEnabled, systemRunSeed, currentSystemPreset]);
 
+  useEffect(() => {
+    if (route !== "learn" || activeModule !== "structured") {
+      return;
+    }
+
+    let cancelled = false;
+
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => {
+        window.setTimeout(resolve, ms);
+      });
+
+    const typeText = async (
+      text: string,
+      setter: (value: string) => void,
+      step = 1,
+      delay = 24,
+    ) => {
+      let current = "";
+
+      for (let index = 0; index < text.length; index += step) {
+        if (cancelled) {
+          return;
+        }
+
+        current = text.slice(0, index + step);
+        setter(current);
+        await sleep(delay);
+      }
+    };
+
+    const runDemo = async () => {
+      setTypedStructuredInput("");
+      setStreamedNaturalThink("");
+      setStreamedNaturalOutput("");
+      setStreamedStructuredThink("");
+      setStreamedStructuredOutput("");
+      setIsNaturalThinkCollapsed(false);
+      setIsJsonThinkCollapsed(false);
+      setStructuredPhase("typing");
+
+      await typeText(structuredOutputDemo.userInput, setTypedStructuredInput, 1, 18);
+      if (cancelled) {
+        return;
+      }
+
+      setStructuredPhase("reading");
+      await sleep(320);
+      if (cancelled) {
+        return;
+      }
+
+      if (structuredThinkEnabled) {
+        setStructuredPhase("natural-thinking");
+        await typeText(
+          `<think>\n${structuredOutputDemo.naturalThink}\n</think>`,
+          setStreamedNaturalThink,
+          2,
+          15,
+        );
+        if (cancelled) {
+          return;
+        }
+
+        await sleep(360);
+        if (cancelled) {
+          return;
+        }
+
+        setIsNaturalThinkCollapsed(true);
+      }
+
+      setStructuredPhase("natural-output");
+      await typeText(structuredOutputDemo.naturalOutput, setStreamedNaturalOutput, 2, 18);
+      if (cancelled) {
+        return;
+      }
+
+      await sleep(180);
+      if (cancelled) {
+        return;
+      }
+
+      if (structuredThinkEnabled) {
+        setStructuredPhase("json-thinking");
+        await typeText(
+          `<think>\n${structuredOutputDemo.structuredThink}\n</think>`,
+          setStreamedStructuredThink,
+          2,
+          14,
+        );
+        if (cancelled) {
+          return;
+        }
+
+        await sleep(360);
+        if (cancelled) {
+          return;
+        }
+
+        setIsJsonThinkCollapsed(true);
+      }
+
+      setStructuredPhase("json-output");
+      await typeText(structuredOutputDemo.structuredOutput, setStreamedStructuredOutput, 2, 16);
+      if (cancelled) {
+        return;
+      }
+
+      setStructuredPhase("done");
+    };
+
+    void runDemo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [route, activeModule, structuredThinkEnabled, structuredRunSeed]);
+
   const phaseLabel =
     streamPhase === "typing"
       ? "正在输入问题"
@@ -275,6 +407,29 @@ function App() {
 
   const replaySystemDemo = () => {
     setSystemRunSeed((value) => value + 1);
+  };
+
+  const structuredPhaseLabel =
+    structuredPhase === "typing"
+      ? "正在输入问题"
+      : structuredPhase === "reading"
+        ? "正在读取输入"
+        : structuredPhase === "natural-thinking"
+          ? "正在生成自然语言思路"
+          : structuredPhase === "natural-output"
+            ? "正在输出自然语言结果"
+            : structuredPhase === "json-thinking"
+              ? "正在生成结构化思路"
+              : structuredPhase === "json-output"
+                ? "正在输出 JSON"
+                : "输出完成";
+
+  const structuredPhaseHint = structuredThinkEnabled
+    ? "打开后，会先展示两段 <think> 思考流，再输出自然语言和 JSON。"
+    : "关闭后，会直接演示两种输出，不展示中间思考。";
+
+  const replayStructuredDemo = () => {
+    setStructuredRunSeed((value) => value + 1);
   };
 
   if (route === "learn") {
@@ -585,6 +740,192 @@ function App() {
                     <span className="panel-label">这一页的重点</span>
                     <p>
                       system prompt 不只是“加一句设定”。它会提前规定模型的身份、结构、语气和边界，所以连思考路径和最后输出都会一起被塑形。
+                    </p>
+                  </article>
+                </div>
+              </>
+            ) : activeModule === "structured" ? (
+              <>
+                <div className="lesson-head">
+                  <p className="eyebrow">第三页</p>
+                  <h1>结构化输出</h1>
+                  <p>
+                    同一个问题，模型可以像人一样写一段自然语言，也可以按你规定的字段输出 JSON。这一步，是从“能看”走向“能编程”。
+                  </p>
+                </div>
+
+                <div className="lesson-toolbar">
+                  <button className="replay-button" onClick={replayStructuredDemo} type="button">
+                    重新播放
+                  </button>
+                  <button
+                    aria-pressed={structuredThinkEnabled}
+                    className={`think-switch ${structuredThinkEnabled ? "is-on" : ""}`}
+                    onClick={() => setStructuredThinkEnabled((value) => !value)}
+                    type="button"
+                  >
+                    <span className="think-switch-copy">
+                      <strong>思考开关</strong>
+                      <small>{structuredPhaseHint}</small>
+                    </span>
+                    <span className="think-switch-track" aria-hidden="true">
+                      <span className="think-switch-thumb" />
+                    </span>
+                  </button>
+                </div>
+
+                <div className="structured-shell">
+                  <div className="structured-inputs">
+                    <section className="composer-card">
+                      <div className="composer-head">
+                        <span className="panel-label">用户输入</span>
+                      </div>
+                      <div className="composer-body structured-input-body">
+                        <p>
+                          {typedStructuredInput}
+                          {structuredPhase === "typing" ? (
+                            <span className="stream-caret composer-caret" aria-hidden="true" />
+                          ) : null}
+                        </p>
+                      </div>
+                    </section>
+
+                    <section className="schema-card">
+                      <div className="composer-head">
+                        <span className="panel-label">目标 JSON 结构</span>
+                      </div>
+                      <pre className="schema-pre">{structuredOutputDemo.schema}</pre>
+                    </section>
+                  </div>
+
+                  <section className="stream-card" aria-live="polite">
+                    <div className="stream-head">
+                      <div>
+                        <span className="panel-label">自然语言输出</span>
+                        <p className="stream-status">{structuredPhaseLabel}</p>
+                      </div>
+                      <div className="stream-pulse" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+
+                    <div className="stream-console">
+                      <div className="stream-line">
+                        <span className="stream-key">mode</span>
+                        <span className="stream-value">plain answer</span>
+                      </div>
+
+                      {structuredThinkEnabled ? (
+                        <div className="stream-think-wrap">
+                          <button
+                            className="think-block-head"
+                            onClick={() => setIsNaturalThinkCollapsed((value) => !value)}
+                            type="button"
+                          >
+                            <span className="stream-key">think</span>
+                            <span className="think-block-state">
+                              {isNaturalThinkCollapsed ? "已折叠" : "展开中"}
+                            </span>
+                          </button>
+
+                          {isNaturalThinkCollapsed ? (
+                            <div className="think-collapsed">
+                              <p>自然语言思考流已完成，点击上方可以重新展开。</p>
+                            </div>
+                          ) : (
+                            <pre className="think-stream">
+                              {streamedNaturalThink}
+                              {structuredPhase === "natural-thinking" ? (
+                                <span className="stream-caret" aria-hidden="true" />
+                              ) : null}
+                            </pre>
+                          )}
+                        </div>
+                      ) : null}
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">output</span>
+                        <p className="stream-output">
+                          {streamedNaturalOutput}
+                          {structuredPhase === "natural-output" ? (
+                            <span className="stream-caret" aria-hidden="true" />
+                          ) : null}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="stream-card structured-json-card" aria-live="polite">
+                    <div className="stream-head">
+                      <div>
+                        <span className="panel-label">结构化输出</span>
+                        <p className="stream-status">同一个输入，被约束成固定字段</p>
+                      </div>
+                      <div className="stream-pulse" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+
+                    <div className="stream-console">
+                      <div className="stream-line">
+                        <span className="stream-key">mode</span>
+                        <span className="stream-value">json object</span>
+                      </div>
+
+                      {structuredThinkEnabled ? (
+                        <div className="stream-think-wrap">
+                          <button
+                            className="think-block-head"
+                            onClick={() => setIsJsonThinkCollapsed((value) => !value)}
+                            type="button"
+                          >
+                            <span className="stream-key">think</span>
+                            <span className="think-block-state">
+                              {isJsonThinkCollapsed ? "已折叠" : "展开中"}
+                            </span>
+                          </button>
+
+                          {isJsonThinkCollapsed ? (
+                            <div className="think-collapsed">
+                              <p>JSON 思考流已完成，点击上方可以重新展开。</p>
+                            </div>
+                          ) : (
+                            <pre className="think-stream">
+                              {streamedStructuredThink}
+                              {structuredPhase === "json-thinking" ? (
+                                <span className="stream-caret" aria-hidden="true" />
+                              ) : null}
+                            </pre>
+                          )}
+                        </div>
+                      ) : null}
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">output</span>
+                        <pre className="stream-output stream-output-json">
+                          {streamedStructuredOutput}
+                          {structuredPhase === "json-output" ? (
+                            <span className="stream-caret" aria-hidden="true" />
+                          ) : null}
+                        </pre>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="io-insights">
+                  <article className="insight-card">
+                    <span className="panel-label">观察点</span>
+                    <p>{structuredOutputDemo.note}</p>
+                  </article>
+                  <article className="insight-card">
+                    <span className="panel-label">这一页的重点</span>
+                    <p>
+                      结构化输出的关键不是“看起来像 JSON”，而是字段稳定、键名稳定、程序可以直接拿去渲染、存库或继续传给下一个函数。
                     </p>
                   </article>
                 </div>
