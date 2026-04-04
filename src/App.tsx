@@ -1271,6 +1271,32 @@ function App() {
   const isReactFinalRound = activeReactRound === reactDemo.loops.length - 1;
   const showReactFinal = isReactFinalRound && (typedReactAnswer || reactPhase === "answer" || reactPhase === "done");
   const showReactLoopback = !isReactFinalRound && (reactPhase === "loopback" || reactPlaybackComplete);
+  const reactInputState =
+    reactPhase === "typing" ? "is-active" : reactFlowStepIndex > 0 ? "is-complete" : "";
+  const reactThoughtState =
+    reactPhase === "thought"
+      ? "is-active"
+      : reactFlowStepIndex > 1 || reactPhase === "answer" || reactPhase === "done"
+        ? "is-complete"
+        : "";
+  const reactActState =
+    reactPhase === "act"
+      ? "is-active"
+      : reactFlowStepIndex > 2 || reactPhase === "answer" || reactPhase === "done"
+        ? "is-complete"
+        : "";
+  const reactServerState =
+    reactPhase === "server"
+      ? "is-active"
+      : reactFlowStepIndex > 3 || reactPhase === "answer" || reactPhase === "done"
+        ? "is-complete"
+        : "";
+  const reactObservationState =
+    reactPhase === "observe" || reactPhase === "loopback"
+      ? "is-active"
+      : reactPhase === "answer" || reactPhase === "done"
+        ? "is-complete"
+        : "";
 
   const runSearch = async (query = searchQuery, source = activeSearchSource) => {
     const trimmedQuery = query.trim();
@@ -2515,53 +2541,55 @@ function App() {
                       ))}
                     </div>
 
-                    <div className="react-flow">
-                      {[
-                        { key: "input", label: "用户问题", index: 0 },
-                        {
-                          key: "thought",
-                          label: "Thought",
-                          index: 1,
-                        },
-                        { key: "act", label: "Act", index: 2 },
-                        { key: "server", label: "MCP Server", index: 3 },
-                        {
-                          key: "observe",
-                          label: "Observation",
-                          index: 4,
-                        },
-                        { key: "answer", label: "最终回答", index: 5 },
-                      ].map((node, index, list) => (
-                        <div className="react-flow-node-wrap" key={node.key}>
-                          <div
-                            className={`react-flow-node ${
-                              node.index < reactFlowStepIndex ||
-                              (node.key === "answer" && reactPhase === "done" && isReactFinalRound)
-                                ? "is-complete"
-                                : ""
-                            } ${
-                              node.index === reactFlowStepIndex &&
-                              !(node.key === "answer" && !isReactFinalRound && reactPhase === "done")
-                                ? "is-active"
-                                : ""
-                            }`}
-                          >
-                            <span>{node.label}</span>
-                          </div>
-                          {index < list.length - 1 ? (
-                            <div
-                              className={`react-flow-line ${
-                                node.index < reactFlowStepIndex ? "is-complete" : ""
-                              } ${node.index === reactFlowStepIndex ? "is-live" : ""}`}
-                            />
-                          ) : null}
-                        </div>
-                      ))}
+                    <div className="react-cycle">
+                      <div className={`react-cycle-node react-cycle-node-input ${reactInputState}`}>
+                        <span>用户问题</span>
+                      </div>
+                      <div
+                        className={`react-cycle-line react-cycle-line-top-left ${
+                          reactFlowStepIndex > 0 ? "is-complete" : ""
+                        } ${reactPhase === "typing" ? "is-live" : ""}`}
+                      />
+                      <div className={`react-cycle-node react-cycle-node-thought ${reactThoughtState}`}>
+                        <span>Thought</span>
+                      </div>
+                      <div
+                        className={`react-cycle-line react-cycle-line-top-right ${
+                          reactFlowStepIndex > 1 ? "is-complete" : ""
+                        } ${reactPhase === "thought" ? "is-live" : ""}`}
+                      />
+                      <div className={`react-cycle-node react-cycle-node-act ${reactActState}`}>
+                        <span>Act</span>
+                      </div>
+
+                      <div
+                        className={`react-cycle-line react-cycle-line-down ${
+                          reactFlowStepIndex > 2 ? "is-complete" : ""
+                        } ${reactPhase === "act" ? "is-live" : ""}`}
+                      />
+                      <div className={`react-cycle-node react-cycle-node-server ${reactServerState}`}>
+                        <span>MCP Server</span>
+                      </div>
+                      <div
+                        className={`react-cycle-line react-cycle-line-bottom ${
+                          reactFlowStepIndex > 3 ? "is-complete" : ""
+                        } ${reactPhase === "server" ? "is-live" : ""}`}
+                      />
+                      <div className={`react-cycle-node react-cycle-node-observe ${reactObservationState}`}>
+                        <span>Observation</span>
+                      </div>
+
+                      <div className={`react-cycle-loop ${showReactLoopback ? "is-visible" : ""}`}>
+                        <div className={`react-cycle-loop-line ${reactPhase === "loopback" ? "is-live" : ""}`} />
+                        <p className="react-cycle-loop-text">信息还不够，带着 Observation 回到 Thought 再想一轮</p>
+                      </div>
                     </div>
 
-                    <div className={`react-loopback ${showReactLoopback ? "is-visible" : ""}`}>
-                      <div className={`react-loopback-line ${reactPhase === "loopback" ? "is-live" : ""}`} />
-                      <p className="react-loopback-text">Observation 还不够，回到 Thought 开启下一轮</p>
+                    <div className={`react-final-stage ${showReactFinal ? "is-visible" : ""}`}>
+                      <div className={`react-final-stage-line ${reactPhase === "answer" ? "is-live" : ""}`} />
+                      <div className={`react-final-stage-node ${showReactFinal ? "is-active" : ""}`}>
+                        <span>最终回答</span>
+                      </div>
                     </div>
 
                     <div className="stream-console react-console">
