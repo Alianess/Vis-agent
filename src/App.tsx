@@ -61,6 +61,8 @@ type SearchPayload = {
   requestPreview: string;
 };
 
+type JsonpCallback<T> = (data: T) => void;
+
 type WikipediaSearchResponse = {
   query?: {
     search?: Array<{
@@ -68,6 +70,33 @@ type WikipediaSearchResponse = {
       snippet?: string;
     }>;
   };
+};
+
+type SemanticScholarPaper = {
+  title?: string;
+  abstract?: string;
+  url?: string;
+  year?: number;
+  authors?: Array<{ name?: string }>;
+  externalIds?: {
+    ArXiv?: string;
+  };
+  openAccessPdf?: {
+    url?: string;
+  };
+};
+
+type SemanticScholarResponse = {
+  data?: SemanticScholarPaper[];
+};
+
+type OpenLibraryResponse = {
+  docs?: Array<{
+    title?: string;
+    author_name?: string[];
+    first_publish_year?: number;
+    key?: string;
+  }>;
 };
 
 type WikipediaPageResponse = {
@@ -211,6 +240,36 @@ function stripHtml(value: string): string {
   return value.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 }
 
+function fetchJsonp<T>(baseUrl: string, params: Record<string, string>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const callbackName = `jsonpCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement("script");
+    const callbackStore = window as unknown as Record<string, JsonpCallback<T> | undefined>;
+    const searchParams = new URLSearchParams({
+      ...params,
+      callback: callbackName,
+    });
+
+    const cleanup = () => {
+      delete callbackStore[callbackName];
+      script.remove();
+    };
+
+    callbackStore[callbackName] = (data: T) => {
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("JSONP 请求失败"));
+    };
+
+    script.src = `${baseUrl}?${searchParams.toString()}`;
+    document.body.appendChild(script);
+  });
+}
+
 async function fetchWikipediaSearchItems(query: string, limit = 5): Promise<SearchItem[]> {
   const languages = ["zh", "en"];
 
@@ -316,54 +375,64 @@ async function searchGitHubRepositories(query: string, limit: number): Promise<S
 }
 
 async function searchArxiv(query: string, limit: number): Promise<SearchPayload> {
-  const url = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(
+  const params = new URLSearchParams({
     query,
-  )}&start=0&max_results=${limit}`;
-  const response = await fetch(url);
+    limit: String(limit),
+    fields: "title,abstract,url,authors,year,externalIds,openAccessPdf",
+  });
+  const response = await fetch(
+    `https://api.semanticscholar.org/graph/v1/paper/search?${params.toString()}`,
+  );
   if (!response.ok) {
     throw new Error("arXiv 搜索失败");
   }
 
-  const xml = await response.text();
-  const doc = new DOMParser().parseFromString(xml, "text/xml");
-  const entries = Array.from(doc.getElementsByTagName("entry")).map((entry) => ({
-    title:
-      entry.getElementsByTagName("title")[0]?.textContent?.replace(/\s+/g, " ").trim() ||
-      "未命名论文",
-    text:
-      entry.getElementsByTagName("summary")[0]?.textContent?.replace(/\s+/g, " ").trim() ||
-      "暂无摘要",
-    url: entry.getElementsByTagName("id")[0]?.textContent?.trim() || "",
-    source: "arXiv 论文",
-  }));
+  const data = (await response.json()) as SemanticScholarResponse;
+  const entries: SearchItem[] =
+    data.data?.map((paper) => {
+      const arxivId = paper.externalIds?.ArXiv;
+      const authors = paper.authors?.map((author) => author.name).filter(Boolean).slice(0, 3).join(" / ");
+      const year = paper.year ? ` · ${paper.year}` : "";
+      const abstract = paper.abstract?.trim();
+
+      return {
+        title: paper.title || "未命名论文",
+        text: abstract || `${authors || "未知作者"}${year}`,
+        url:
+          arxivId
+            ? `https://arxiv.org/abs/${arxivId}`
+            : paper.openAccessPdf?.url || paper.url || "",
+        source: arxivId ? "arXiv 论文" : "学术论文",
+      };
+    }) ?? [];
 
   return {
     featured: entries[0],
     items: entries.slice(1),
-    requestPreview: `GET https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(
+    requestPreview: `GET https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(
       query,
-    )}&start=0&max_results=${limit}`,
+    )}&limit=${limit}&fields=title,abstract,url,authors,year,externalIds,openAccessPdf`,
   };
 }
 
 async function searchOpenLibrary(query: string, limit: number): Promise<SearchPayload> {
-  const params = new URLSearchParams({
+  const requestParams = {
     q: query,
     limit: String(limit),
-  });
-  const response = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
-  if (!response.ok) {
-    throw new Error("Open Library 搜索失败");
-  }
-
-  const data = (await response.json()) as {
-    docs?: Array<{
-      title?: string;
-      author_name?: string[];
-      first_publish_year?: number;
-      key?: string;
-    }>;
   };
+
+  let data: OpenLibraryResponse;
+
+  try {
+    data = await fetchJsonp<OpenLibraryResponse>("https://openlibrary.org/search.json", requestParams);
+  } catch {
+    const params = new URLSearchParams(requestParams);
+    const response = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error("Open Library 搜索失败");
+    }
+    data = (await response.json()) as OpenLibraryResponse;
+  }
 
   const items: SearchItem[] =
     data.docs?.map((item) => ({
@@ -380,7 +449,7 @@ async function searchOpenLibrary(query: string, limit: number): Promise<SearchPa
     items: items.slice(1),
     requestPreview: `GET https://openlibrary.org/search.json?q=${encodeURIComponent(
       query,
-    )}&limit=${limit}`,
+    )}&limit=${limit}&callback=...`,
   };
 }
 

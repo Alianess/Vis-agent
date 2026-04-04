@@ -755,6 +755,10 @@ code {
   backdrop-filter: blur(18px);
 }
 
+.search-shell > * {
+  min-width: 0;
+}
+
 .search-form {
   display: grid;
   gap: 16px;
@@ -772,6 +776,7 @@ code {
 
 .search-field input {
   width: 100%;
+  max-width: 100%;
   min-height: 48px;
   padding: 0 14px;
   border: 1px solid var(--line);
@@ -831,10 +836,21 @@ code {
 
 .search-request-card {
   margin-top: 18px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .search-results-stack {
   margin-top: 18px;
+}
+
+.search-request-card .compare-pre {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .search-summary-card h2,
