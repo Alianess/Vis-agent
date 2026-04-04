@@ -18,6 +18,9 @@ import {
   mcpRealityNotes,
   searchApiNotes,
   searchSourceDemos,
+  reactDemo,
+  reactExplainCards,
+  reactImplementationNotes,
   stagePills,
   structuredOutputDemo,
   systemPromptDemos,
@@ -558,6 +561,17 @@ function App() {
     "typing",
   );
   const [isFunctionThinkCollapsed, setIsFunctionThinkCollapsed] = useState(false);
+  const [reactRunSeed, setReactRunSeed] = useState(0);
+  const [typedReactInput, setTypedReactInput] = useState("");
+  const [typedReactThought, setTypedReactThought] = useState("");
+  const [typedReactToolCall, setTypedReactToolCall] = useState("");
+  const [typedReactServer, setTypedReactServer] = useState("");
+  const [typedReactObservation, setTypedReactObservation] = useState("");
+  const [typedReactAnswer, setTypedReactAnswer] = useState("");
+  const [activeReactRound, setActiveReactRound] = useState(0);
+  const [reactPhase, setReactPhase] = useState<
+    "typing" | "thought" | "act" | "server" | "observe" | "answer" | "done"
+  >("typing");
   const [activeSearchSource, setActiveSearchSource] = useState<SearchSourceId>(
     searchSourceDemos[0].id as SearchSourceId,
   );
@@ -989,6 +1003,122 @@ function App() {
     currentFunctionPreset,
   ]);
 
+  useEffect(() => {
+    if (route !== "learn" || activeModule !== "react") {
+      return;
+    }
+
+    let cancelled = false;
+
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => {
+        window.setTimeout(resolve, ms);
+      });
+
+    const typeText = async (
+      text: string,
+      setter: (value: string) => void,
+      step = 1,
+      delay = 20,
+    ) => {
+      let current = "";
+
+      for (let index = 0; index < text.length; index += step) {
+        if (cancelled) {
+          return;
+        }
+
+        current = text.slice(0, index + step);
+        setter(current);
+        await sleep(delay);
+      }
+    };
+
+    const runDemo = async () => {
+      setTypedReactInput("");
+      setTypedReactThought("");
+      setTypedReactToolCall("");
+      setTypedReactServer("");
+      setTypedReactObservation("");
+      setTypedReactAnswer("");
+      setActiveReactRound(0);
+      setReactPhase("typing");
+
+      await typeText(reactDemo.userInput, setTypedReactInput, 1, 18);
+      if (cancelled) {
+        return;
+      }
+
+      for (let index = 0; index < reactDemo.loops.length; index += 1) {
+        const loop = reactDemo.loops[index];
+
+        setActiveReactRound(index);
+        setTypedReactThought("");
+        setTypedReactToolCall("");
+        setTypedReactServer("");
+        setTypedReactObservation("");
+
+        setReactPhase("thought");
+        await typeText(loop.thought, setTypedReactThought, 2, 16);
+        if (cancelled) {
+          return;
+        }
+
+        await sleep(220);
+        if (cancelled) {
+          return;
+        }
+
+        setReactPhase("act");
+        await typeText(loop.toolCall, setTypedReactToolCall, 2, 14);
+        if (cancelled) {
+          return;
+        }
+
+        await sleep(220);
+        if (cancelled) {
+          return;
+        }
+
+        setReactPhase("server");
+        await typeText(loop.serverAction, setTypedReactServer, 2, 15);
+        if (cancelled) {
+          return;
+        }
+
+        await sleep(220);
+        if (cancelled) {
+          return;
+        }
+
+        setReactPhase("observe");
+        await typeText(loop.observation, setTypedReactObservation, 2, 16);
+        if (cancelled) {
+          return;
+        }
+
+        await sleep(360);
+        if (cancelled) {
+          return;
+        }
+      }
+
+      setReactPhase("answer");
+      await typeText(reactDemo.finalAnswer, setTypedReactAnswer, 2, 18);
+      if (cancelled) {
+        return;
+      }
+
+      setReactPhase("done");
+    };
+
+    void runDemo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [route, activeModule, reactRunSeed]);
+
   const phaseLabel =
     streamPhase === "typing"
       ? "正在输入问题"
@@ -1067,6 +1197,25 @@ function App() {
 
   const replayFunctionDemo = () => {
     setFunctionRunSeed((value) => value + 1);
+  };
+
+  const reactPhaseLabel =
+    reactPhase === "typing"
+      ? "正在接收用户问题"
+      : reactPhase === "thought"
+        ? `正在进行 ${reactDemo.loops[activeReactRound]?.label || ""} Thought`
+        : reactPhase === "act"
+          ? `正在进行 ${reactDemo.loops[activeReactRound]?.label || ""} Act`
+          : reactPhase === "server"
+            ? "MCP server 正在执行工具"
+            : reactPhase === "observe"
+              ? `正在读取 ${reactDemo.loops[activeReactRound]?.label || ""} Observation`
+              : reactPhase === "answer"
+                ? "正在整理最终回答"
+                : "循环完成";
+
+  const replayReactDemo = () => {
+    setReactRunSeed((value) => value + 1);
   };
 
   const runSearch = async (query = searchQuery, source = activeSearchSource) => {
@@ -2227,6 +2376,192 @@ function App() {
                     <span className="panel-label">这一页的重点</span>
                     <p>
                       这一页最重要的不是结果有多全，而是让人直观看到：当模型需要外部信息时，搜索接口会先把信息取回来，再交给后续流程继续处理。
+                    </p>
+                  </article>
+                </div>
+              </>
+            ) : activeModule === "react" ? (
+              <>
+                <div className="lesson-head">
+                  <p className="eyebrow">第七页</p>
+                  <h1>ReAct 循环</h1>
+                  <p>
+                    ReAct 不是一个玄学词，你可以把它理解成“边想边查边修正”的工作流。像一个靠谱的实习生，先判断信息够不够，不够就去查，查完再回来继续想。
+                  </p>
+                </div>
+
+                <div className="system-intro-card">
+                  <span className="panel-label">先用比喻理解</span>
+                  <h2>不是一口气想完，而是想一点、查一点、再回来</h2>
+                  <p>{reactDemo.analogy}</p>
+                </div>
+
+                <div className="lesson-toolbar">
+                  <button className="replay-button" onClick={replayReactDemo} type="button">
+                    重新播放
+                  </button>
+                </div>
+
+                <div className="react-shell">
+                  <section className="composer-card react-context-card">
+                    <div className="composer-head">
+                      <span className="panel-label">上下文准备</span>
+                    </div>
+                    <div className="function-context-body">
+                      <div className="function-context-block">
+                        <span className="function-context-label">user input</span>
+                        <p className="function-context-prompt">
+                          {typedReactInput}
+                          {reactPhase === "typing" ? (
+                            <span className="stream-caret composer-caret" aria-hidden="true" />
+                          ) : null}
+                        </p>
+                      </div>
+                      <div className="function-context-block">
+                        <span className="function-context-label">system prompt</span>
+                        <p className="function-context-help">{reactDemo.systemPrompt}</p>
+                      </div>
+                      <div className="function-context-block">
+                        <span className="function-context-label">tools</span>
+                        <pre className="function-context-tools">{reactDemo.tools}</pre>
+                      </div>
+                      <div className="function-context-block">
+                        <span className="function-context-label">MCP server</span>
+                        <p className="function-context-help">{reactDemo.mcpServer}</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="stream-card react-board" aria-live="polite">
+                    <div className="stream-head">
+                      <div>
+                        <span className="panel-label">循环动线</span>
+                        <p className="stream-status">{reactPhaseLabel}</p>
+                      </div>
+                      <div className="stream-pulse" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+
+                    <div className="react-flow">
+                      {[
+                        { key: "input", label: "用户问题", active: reactPhase === "typing" },
+                        {
+                          key: "thought",
+                          label: "Thought",
+                          active: reactPhase === "thought",
+                        },
+                        { key: "act", label: "Act", active: reactPhase === "act" },
+                        { key: "server", label: "MCP Server", active: reactPhase === "server" },
+                        {
+                          key: "observe",
+                          label: "Observation",
+                          active: reactPhase === "observe",
+                        },
+                        { key: "answer", label: "最终回答", active: reactPhase === "answer" || reactPhase === "done" },
+                      ].map((node, index, list) => (
+                        <div className="react-flow-node-wrap" key={node.key}>
+                          <div className={`react-flow-node ${node.active ? "is-active" : ""}`}>
+                            <span>{node.label}</span>
+                          </div>
+                          {index < list.length - 1 ? (
+                            <div className={`react-flow-line ${node.active ? "is-live" : ""}`} />
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="stream-console react-console">
+                      <div className="stream-line">
+                        <span className="stream-key">round</span>
+                        <span className="stream-value">{reactDemo.loops[activeReactRound]?.label}</span>
+                      </div>
+                      <div className="stream-line">
+                        <span className="stream-key">goal</span>
+                        <span className="stream-value">{reactDemo.loops[activeReactRound]?.goal}</span>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">thought</span>
+                        <p className="stream-output">
+                          {typedReactThought}
+                          {reactPhase === "thought" ? <span className="stream-caret" aria-hidden="true" /> : null}
+                        </p>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">tool call</span>
+                        <pre className="stream-output stream-output-json">
+                          {typedReactToolCall}
+                          {reactPhase === "act" ? <span className="stream-caret" aria-hidden="true" /> : null}
+                        </pre>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">server</span>
+                        <p className="stream-output">
+                          {typedReactServer}
+                          {reactPhase === "server" ? <span className="stream-caret" aria-hidden="true" /> : null}
+                        </p>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">observe</span>
+                        <p className="stream-output">
+                          {typedReactObservation}
+                          {reactPhase === "observe" ? <span className="stream-caret" aria-hidden="true" /> : null}
+                        </p>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">final</span>
+                        <p className="stream-output">
+                          {typedReactAnswer}
+                          {reactPhase === "answer" ? <span className="stream-caret" aria-hidden="true" /> : null}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="react-round-grid">
+                  {reactDemo.loops.map((loop, index) => (
+                    <article
+                      className={`topic-card react-round-card ${activeReactRound === index ? "is-active" : ""}`}
+                      key={loop.label}
+                    >
+                      <span className="panel-label">{loop.label}</span>
+                      <h3>{loop.goal}</h3>
+                      <p>{loop.observation}</p>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="provider-grid">
+                  {reactExplainCards.map((item) => (
+                    <article className="topic-card" key={item.title}>
+                      <span className="panel-label">讲人话版</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.body}</p>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="io-insights">
+                  <article className="insight-card">
+                    <span className="panel-label">怎样实现</span>
+                    {reactImplementationNotes.map((note) => (
+                      <p className="mcp-note" key={note}>
+                        {note}
+                      </p>
+                    ))}
+                  </article>
+                  <article className="insight-card">
+                    <span className="panel-label">这一页的重点</span>
+                    <p>
+                      ReAct 的本质不是“多想几步”，而是让模型在每一轮里决定：现在该继续想，还是该去行动。只要外部信息会改变下一步判断，这个循环就很有价值。
                     </p>
                   </article>
                 </div>

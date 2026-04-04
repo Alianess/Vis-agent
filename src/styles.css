@@ -384,6 +384,8 @@ code {
 .mcp-flow-grid,
 .mcp-demo-shell,
 .search-shell,
+.react-shell,
+.react-round-grid,
 .provider-grid,
 .search-related-grid,
 .search-results-stack {
@@ -439,6 +441,11 @@ code {
   margin-top: 22px;
 }
 
+.react-shell {
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  margin-top: 22px;
+}
+
 .function-compare-grid {
   grid-template-columns: 1fr;
   margin-top: 18px;
@@ -469,6 +476,11 @@ code {
   margin-top: 20px;
 }
 
+.react-round-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 20px;
+}
+
 .search-related-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -495,6 +507,7 @@ code {
 .search-request-card,
 .mcp-difference-card,
 .mcp-step-card,
+.react-round-card,
 .placeholder-panel {
   padding: 22px;
   border-radius: 28px;
@@ -1293,6 +1306,97 @@ code {
   font-size: 0.95rem;
 }
 
+.react-board {
+  overflow: hidden;
+}
+
+.react-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 24px;
+  padding: 6px 0 10px;
+  overflow-x: auto;
+}
+
+.react-flow-node-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1 0 auto;
+}
+
+.react-flow-node {
+  display: grid;
+  place-items: center;
+  min-width: 92px;
+  min-height: 92px;
+  padding: 12px;
+  border-radius: 24px;
+  border: 1px solid rgba(167, 182, 221, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(219, 228, 255, 0.72);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.react-flow-node.is-active {
+  transform: translateY(-2px);
+  border-color: rgba(160, 187, 255, 0.5);
+  background: linear-gradient(180deg, rgba(76, 103, 176, 0.34), rgba(48, 67, 124, 0.3));
+  color: #ffffff;
+  box-shadow: 0 0 0 8px rgba(102, 126, 208, 0.12);
+}
+
+.react-flow-line {
+  position: relative;
+  width: 54px;
+  height: 2px;
+  margin: 0 10px;
+  background: linear-gradient(90deg, rgba(167, 182, 221, 0.16), rgba(167, 182, 221, 0.32));
+  overflow: hidden;
+}
+
+.react-flow-line.is-live::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -30%;
+  width: 44%;
+  background: linear-gradient(90deg, transparent, rgba(191, 207, 255, 0.9), transparent);
+  animation: react-travel 1.25s linear infinite;
+}
+
+.react-console {
+  margin-top: 22px;
+}
+
+.react-context-card {
+  min-height: 100%;
+}
+
+.react-round-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.react-round-card.is-active {
+  transform: translateY(-2px);
+  border-color: rgba(83, 110, 201, 0.22);
+  box-shadow: 0 26px 60px rgba(34, 51, 106, 0.08);
+}
+
 .structured-json-card {
   background:
     linear-gradient(180deg, #0c1322 0%, #0f1a30 100%);
@@ -1377,6 +1481,12 @@ code {
   }
 }
 
+@keyframes react-travel {
+  to {
+    transform: translateX(220%);
+  }
+}
+
 @media (max-width: 1100px) {
   .topic-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1397,6 +1507,8 @@ code {
   .mcp-flow-grid,
   .mcp-demo-shell,
   .search-shell,
+  .react-shell,
+  .react-round-grid,
   .provider-grid,
   .search-related-grid {
     grid-template-columns: 1fr;

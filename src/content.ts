@@ -564,3 +564,112 @@ export const apiCards = [
     body: "Python / FastAPI 单独部署，用来接 OpenAI、搜索和后续工具。",
   },
 ];
+
+export const reactDemo = {
+  analogy:
+    "你可以把 ReAct 想成一个会干活的实习生：不是坐在原地硬想到底，而是想一点、查一点、再回来继续想，直到信息够了再交答案。",
+  userInput:
+    "请帮我给刚开始学 Agent 的人，推荐 3 个最值得先看的开源项目，并各用一句话说明为什么值得看。",
+  systemPrompt:
+    "你是一位面向初学者的 AI 架构老师。先查资料再回答，语言短句化，不卖弄术语。每次工具调用后先吸收结果，再决定下一步。",
+  tools: `[
+  {
+    "type": "function",
+    "name": "search_projects",
+    "description": "搜索与 Agent 相关的开源项目",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": { "type": "string" },
+        "top_k": { "type": "integer" }
+      },
+      "required": ["query"]
+    }
+  },
+  {
+    "type": "function",
+    "name": "read_project_detail",
+    "description": "读取某个项目的说明和定位",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "repo": { "type": "string" }
+      },
+      "required": ["repo"]
+    }
+  }
+]`,
+  mcpServer:
+    "这里假设客户端连了一个 GitHub / Search MCP server。模型不会直接碰 GitHub API，而是先输出 function call，再由客户端转发给 MCP server 执行。",
+  loops: [
+    {
+      label: "第 1 轮",
+      goal: "先找候选项目",
+      thought:
+        "我还不知道哪些项目最适合初学者，先查一批 Agent 相关开源项目，再从中挑更适合入门的。",
+      toolCall: `{
+  "name": "search_projects",
+  "arguments": {
+    "query": "agent open source beginner friendly",
+    "top_k": 5
+  }
+}`,
+      serverAction:
+        "客户端把这段 function call 发给 MCP server。server 内部真的去查项目索引，再把仓库名、简介和热度信息回传。",
+      observation:
+        "候选里出现了 LangChain、AutoGen、LangGraph、CrewAI、DeerFlow。我已经有名单了，但还不知道它们各自更适合什么入门方向。",
+    },
+    {
+      label: "第 2 轮",
+      goal: "补足项目定位",
+      thought:
+        "现在名单有了，但直接推荐还不够。我需要再看每个项目的说明，确认它是偏工作流、偏多 Agent，还是偏通用工具层。",
+      toolCall: `{
+  "name": "read_project_detail",
+  "arguments": {
+    "repo": "langchain-ai/langgraph"
+  }
+}`,
+      serverAction:
+        "MCP server 去读这个项目的说明文档，把“它解决什么问题、适合谁用”的摘要返回给模型。",
+      observation:
+        "LangGraph 更适合讲清楚 Agent 的状态流和循环；AutoGen 更适合展示多 Agent 协作；CrewAI 更适合初学者快速感受角色分工。",
+    },
+    {
+      label: "第 3 轮",
+      goal: "整理成初学者能读懂的答案",
+      thought:
+        "信息已经够了，不需要继续查了。现在要做的是把结果压缩成 3 个项目，每个只给一句最容易懂的理由。",
+      toolCall: "这一轮不再调工具，而是回到模型侧整理答案。",
+      serverAction: "无新的 MCP 调用。",
+      observation:
+        "我已经有候选项目、项目定位和适合的讲法，可以直接输出最终推荐。",
+    },
+  ],
+  finalAnswer:
+    "如果你刚开始学 Agent，我会先看 LangGraph、CrewAI 和 AutoGen。LangGraph 适合看清一个 Agent 是怎么在状态与循环里推进任务的；CrewAI 适合快速理解“角色分工式”的多步骤协作；AutoGen 则很适合感受多个 Agent 之间怎样对话和协同。",
+};
+
+export const reactExplainCards = [
+  {
+    title: "为什么不一次想完",
+    body: "因为模型一开始往往信息不够。ReAct 的关键不是“更会想”，而是知道什么时候该停下来去查。",
+  },
+  {
+    title: "为什么会形成循环",
+    body: "每次工具返回的新信息，都会改变模型的下一步判断。所以它不是直线，而是“想一下、查一下、再回来”。",
+  },
+  {
+    title: "MCP 在这里干嘛",
+    body: "模型负责产出 function call，MCP server 负责真的去执行工具。ReAct 就是把这两者放进一个可反复迭代的工作流里。",
+  },
+];
+
+export const reactImplementationNotes = [
+  "先把用户输入、系统提示词和 tools 放进上下文。",
+  "模型先产出 Thought，判断需不需要行动。",
+  "如果需要工具，就输出 function call JSON。",
+  "客户端把调用转发给 MCP server 去执行。",
+  "工具结果作为 Observation 回到上下文里。",
+  "模型基于新观察进入下一轮，直到信息足够再输出最终答案。",
+];
