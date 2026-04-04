@@ -1310,6 +1310,11 @@ code {
   overflow: hidden;
 }
 
+.react-round-switcher {
+  margin-top: 18px;
+  margin-bottom: 4px;
+}
+
 .react-flow {
   display: flex;
   align-items: center;
@@ -1381,14 +1386,25 @@ code {
 }
 
 .react-round-card {
+  display: grid;
+  gap: 0;
+  width: 100%;
+  text-align: left;
   border: 1px solid var(--line);
   background: var(--surface);
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
+  cursor: pointer;
   transition:
     transform 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease;
+}
+
+.react-round-card:disabled,
+.preset-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .react-round-card.is-active {

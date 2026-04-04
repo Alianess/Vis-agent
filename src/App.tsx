@@ -569,6 +569,7 @@ function App() {
   const [typedReactObservation, setTypedReactObservation] = useState("");
   const [typedReactAnswer, setTypedReactAnswer] = useState("");
   const [activeReactRound, setActiveReactRound] = useState(0);
+  const [reactPlaybackComplete, setReactPlaybackComplete] = useState(false);
   const [reactPhase, setReactPhase] = useState<
     "typing" | "thought" | "act" | "server" | "observe" | "answer" | "done"
   >("typing");
@@ -1042,6 +1043,7 @@ function App() {
       setTypedReactObservation("");
       setTypedReactAnswer("");
       setActiveReactRound(0);
+      setReactPlaybackComplete(false);
       setReactPhase("typing");
 
       await typeText(reactDemo.userInput, setTypedReactInput, 1, 18);
@@ -1110,6 +1112,7 @@ function App() {
       }
 
       setReactPhase("done");
+      setReactPlaybackComplete(true);
     };
 
     void runDemo();
@@ -1200,7 +1203,9 @@ function App() {
   };
 
   const reactPhaseLabel =
-    reactPhase === "typing"
+    reactPlaybackComplete && reactPhase === "done"
+      ? "三轮已播放完成，点击下方轮次可切换查看"
+      : reactPhase === "typing"
       ? "正在接收用户问题"
       : reactPhase === "thought"
         ? `正在进行 ${reactDemo.loops[activeReactRound]?.label || ""} Thought`
@@ -1216,6 +1221,23 @@ function App() {
 
   const replayReactDemo = () => {
     setReactRunSeed((value) => value + 1);
+  };
+
+  const showReactRound = (roundIndex: number) => {
+    const loop = reactDemo.loops[roundIndex];
+    if (!loop) {
+      return;
+    }
+
+    setActiveReactRound(roundIndex);
+    setTypedReactInput(reactDemo.userInput);
+    setTypedReactThought(loop.thought);
+    setTypedReactToolCall(loop.toolCall);
+    setTypedReactServer(loop.serverAction);
+    setTypedReactObservation(loop.observation);
+    setTypedReactAnswer(reactDemo.finalAnswer);
+    setReactPhase("done");
+    setReactPlaybackComplete(true);
   };
 
   const runSearch = async (query = searchQuery, source = activeSearchSource) => {
@@ -2445,6 +2467,22 @@ function App() {
                       </div>
                     </div>
 
+                    <div className="preset-switcher react-round-switcher" role="tablist" aria-label="轮次切换">
+                      {reactDemo.loops.map((loop, index) => (
+                        <button
+                          aria-selected={activeReactRound === index}
+                          className={`preset-chip ${activeReactRound === index ? "is-active" : ""}`}
+                          disabled={!reactPlaybackComplete}
+                          key={loop.label}
+                          onClick={() => showReactRound(index)}
+                          role="tab"
+                          type="button"
+                        >
+                          {loop.label}
+                        </button>
+                      ))}
+                    </div>
+
                     <div className="react-flow">
                       {[
                         { key: "input", label: "用户问题", active: reactPhase === "typing" },
@@ -2528,14 +2566,17 @@ function App() {
 
                 <div className="react-round-grid">
                   {reactDemo.loops.map((loop, index) => (
-                    <article
+                    <button
                       className={`topic-card react-round-card ${activeReactRound === index ? "is-active" : ""}`}
+                      disabled={!reactPlaybackComplete}
                       key={loop.label}
+                      onClick={() => showReactRound(index)}
+                      type="button"
                     >
                       <span className="panel-label">{loop.label}</span>
                       <h3>{loop.goal}</h3>
                       <p>{loop.observation}</p>
-                    </article>
+                    </button>
                   ))}
                 </div>
 
