@@ -419,6 +419,7 @@ async function searchOpenLibrary(query: string, limit: number): Promise<SearchPa
   const requestParams = {
     q: query,
     limit: String(limit),
+    fields: "key,title,author_name,first_publish_year",
   };
 
   let data: OpenLibraryResponse;
@@ -426,12 +427,20 @@ async function searchOpenLibrary(query: string, limit: number): Promise<SearchPa
   try {
     data = await fetchJsonp<OpenLibraryResponse>("https://openlibrary.org/search.json", requestParams);
   } catch {
-    const params = new URLSearchParams(requestParams);
-    const response = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
-    if (!response.ok) {
-      throw new Error("Open Library 搜索失败");
+    try {
+      const params = new URLSearchParams(requestParams);
+      const response = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      data = (await response.json()) as OpenLibraryResponse;
+    } catch (error) {
+      throw new Error(
+        `Open Library 搜索失败：浏览器端直连未成功${
+          error instanceof Error && error.message ? `（${error.message}）` : ""
+        }`,
+      );
     }
-    data = (await response.json()) as OpenLibraryResponse;
   }
 
   const items: SearchItem[] =
@@ -444,12 +453,16 @@ async function searchOpenLibrary(query: string, limit: number): Promise<SearchPa
       source: "Open Library",
     })) ?? [];
 
+  if (items.length === 0) {
+    throw new Error("Open Library 搜索失败：接口返回为空");
+  }
+
   return {
     featured: items[0],
     items: items.slice(1),
     requestPreview: `GET https://openlibrary.org/search.json?q=${encodeURIComponent(
       query,
-    )}&limit=${limit}&callback=...`,
+    )}&limit=${limit}&fields=key,title,author_name,first_publish_year&callback=...`,
   };
 }
 
