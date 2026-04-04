@@ -61,8 +61,6 @@ type SearchPayload = {
   requestPreview: string;
 };
 
-type JsonpCallback<T> = (data: T) => void;
-
 type WikipediaSearchResponse = {
   query?: {
     search?: Array<{
@@ -240,36 +238,6 @@ function stripHtml(value: string): string {
   return value.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 }
 
-function fetchJsonp<T>(baseUrl: string, params: Record<string, string>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const callbackName = `jsonpCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    const script = document.createElement("script");
-    const callbackStore = window as unknown as Record<string, JsonpCallback<T> | undefined>;
-    const searchParams = new URLSearchParams({
-      ...params,
-      callback: callbackName,
-    });
-
-    const cleanup = () => {
-      delete callbackStore[callbackName];
-      script.remove();
-    };
-
-    callbackStore[callbackName] = (data: T) => {
-      cleanup();
-      resolve(data);
-    };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error("JSONP 请求失败"));
-    };
-
-    script.src = `${baseUrl}?${searchParams.toString()}`;
-    document.body.appendChild(script);
-  });
-}
-
 async function fetchWikipediaSearchItems(query: string, limit = 5): Promise<SearchItem[]> {
   const languages = ["zh", "en"];
 
@@ -416,32 +384,22 @@ async function searchArxiv(query: string, limit: number): Promise<SearchPayload>
 }
 
 async function searchOpenLibrary(query: string, limit: number): Promise<SearchPayload> {
-  const requestParams = {
+  const params = new URLSearchParams({
     q: query,
     limit: String(limit),
     fields: "key,title,author_name,first_publish_year",
-  };
-
-  let data: OpenLibraryResponse;
-
-  try {
-    data = await fetchJsonp<OpenLibraryResponse>("https://openlibrary.org/search.json", requestParams);
-  } catch {
-    try {
-      const params = new URLSearchParams(requestParams);
-      const response = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      data = (await response.json()) as OpenLibraryResponse;
-    } catch (error) {
-      throw new Error(
-        `Open Library 搜索失败：浏览器端直连未成功${
-          error instanceof Error && error.message ? `（${error.message}）` : ""
-        }`,
-      );
-    }
+  });
+  const response = await fetch(`https://openlibrary.org/search.json?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Open Library 搜索失败：HTTP ${response.status}`);
   }
+
+  const data = (await response.json()) as OpenLibraryResponse;
 
   const items: SearchItem[] =
     data.docs?.map((item) => ({
@@ -462,7 +420,7 @@ async function searchOpenLibrary(query: string, limit: number): Promise<SearchPa
     items: items.slice(1),
     requestPreview: `GET https://openlibrary.org/search.json?q=${encodeURIComponent(
       query,
-    )}&limit=${limit}&fields=key,title,author_name,first_publish_year&callback=...`,
+    )}&limit=${limit}&fields=key,title,author_name,first_publish_year`,
   };
 }
 
