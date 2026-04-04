@@ -6,9 +6,15 @@ import {
   introTopics,
   ioDemo,
   learningModules,
+  mcpClarifyNote,
   mcpComparisons,
+  mcpCoreParts,
+  mcpDemoScenario,
+  mcpDifferenceRows,
   mcpExamples,
   mcpFlowSteps,
+  mcpMisconceptions,
+  mcpPlainFacts,
   mcpRealityNotes,
   searchApiNotes,
   searchSourceDemos,
@@ -507,12 +513,10 @@ function App() {
   const [functionRunSeed, setFunctionRunSeed] = useState(0);
   const [typedFunctionInput, setTypedFunctionInput] = useState("");
   const [streamedFunctionThink, setStreamedFunctionThink] = useState("");
-  const [streamedFunctionArgs, setStreamedFunctionArgs] = useState("");
-  const [streamedFunctionResult, setStreamedFunctionResult] = useState("");
-  const [streamedFunctionOutput, setStreamedFunctionOutput] = useState("");
-  const [functionPhase, setFunctionPhase] = useState<
-    "typing" | "thinking" | "calling" | "result" | "answering" | "done"
-  >("typing");
+  const [streamedFunctionCall, setStreamedFunctionCall] = useState("");
+  const [functionPhase, setFunctionPhase] = useState<"typing" | "thinking" | "calling" | "done">(
+    "typing",
+  );
   const [isFunctionThinkCollapsed, setIsFunctionThinkCollapsed] = useState(false);
   const [activeSearchSource, setActiveSearchSource] = useState<SearchSourceId>(
     searchSourceDemos[0].id as SearchSourceId,
@@ -881,45 +885,19 @@ function App() {
       }
     };
 
-    const getDynamicToolResult = () => {
-      if (currentFunctionPreset.id !== "time") {
-        return currentFunctionPreset.toolResult ?? "";
-      }
-
-      const now = new Date();
-      const parts = new Intl.DateTimeFormat("zh-CN", {
-        timeZone: "Asia/Shanghai",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-      })
-        .formatToParts(now)
-        .reduce<Record<string, string>>((acc, part) => {
-          if (part.type !== "literal") {
-            acc[part.type] = part.value;
-          }
-          return acc;
-        }, {});
-
-      return `{
-  "timezone": "Asia/Shanghai",
-  "current_time": "${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}",
-  "weekday": "${now.toLocaleDateString("zh-CN", { weekday: "long", timeZone: "Asia/Shanghai" })}"
+    const buildFunctionCallJson = () => `{
+  "type": "function_call",
+  "name": "${currentFunctionPreset.functionName}",
+  "arguments": ${currentFunctionPreset.argumentsJson
+    .split("\n")
+    .map((line, index) => (index === 0 ? line : `  ${line}`))
+    .join("\n")}
 }`;
-    };
 
     const runDemo = async () => {
-      const toolResult = getDynamicToolResult();
-
       setTypedFunctionInput("");
       setStreamedFunctionThink("");
-      setStreamedFunctionArgs("");
-      setStreamedFunctionResult("");
-      setStreamedFunctionOutput("");
+      setStreamedFunctionCall("");
       setIsFunctionThinkCollapsed(false);
       setFunctionPhase("typing");
 
@@ -949,33 +927,7 @@ function App() {
       }
 
       setFunctionPhase("calling");
-      await typeText(currentFunctionPreset.argumentsJson, setStreamedFunctionArgs, 2, 14);
-      if (cancelled) {
-        return;
-      }
-
-      await sleep(200);
-      if (cancelled) {
-        return;
-      }
-
-      setFunctionPhase("result");
-      await typeText(toolResult, setStreamedFunctionResult, 2, 16);
-      if (cancelled) {
-        return;
-      }
-
-      await sleep(200);
-      if (cancelled) {
-        return;
-      }
-
-      setFunctionPhase("answering");
-      const finalOutput =
-        currentFunctionPreset.id === "time"
-          ? `现在是北京时间 ${toolResult.match(/"current_time": "([^"]+)"/)?.[1] ?? ""}，${toolResult.match(/"weekday": "([^"]+)"/)?.[1] ?? ""}。`
-          : currentFunctionPreset.output ?? "";
-      await typeText(finalOutput, setStreamedFunctionOutput, 2, 18);
+      await typeText(buildFunctionCallJson(), setStreamedFunctionCall, 2, 14);
       if (cancelled) {
         return;
       }
@@ -1066,16 +1018,12 @@ function App() {
       : functionPhase === "thinking"
         ? "正在判断是否要调用函数"
         : functionPhase === "calling"
-          ? "正在补齐函数参数"
-          : functionPhase === "result"
-            ? "正在接收函数结果"
-            : functionPhase === "answering"
-              ? "正在组织最终回答"
-              : "输出完成";
+          ? "正在生成函数调用 JSON"
+          : "输出完成";
 
   const functionPhaseHint = functionThinkEnabled
-    ? "打开后，会先展示 <think>，再展示函数参数、返回值和最终回答。"
-    : "关闭后，会跳过思考流，直接演示函数调用过程。";
+    ? "打开后，会先展示 <think>，再展示模型产出的 function call JSON。"
+    : "关闭后，会跳过思考流，直接展示 function call JSON。";
 
   const replayFunctionDemo = () => {
     setFunctionRunSeed((value) => value + 1);
@@ -1663,7 +1611,7 @@ function App() {
                   <p className="eyebrow">第四页</p>
                   <h1>Function Calling</h1>
                   <p>
-                    这一页开始进入“模型不只是回答，而是先决定要不要调用工具”。关键不是函数本身，而是模型如何判断、补参数、拿结果、再回来回答。
+                    这一页只看模型侧。重点不是函数怎么执行，而是模型在看到 tools 说明书后，怎样判断该不该调工具，并产出一段调用 JSON。
                   </p>
                 </div>
 
@@ -1691,9 +1639,9 @@ function App() {
                 <div className="function-compare-grid">
                   <article className="compare-card">
                     <span className="panel-label">Tools 是什么</span>
-                    <p className="compare-title">它不是“模型会的技能”，而是程序提前开放给模型的一组可调用能力</p>
+                    <p className="compare-title">它不是函数源码，而是程序提前塞给模型的一份“工具说明书”</p>
                     <p>
-                      你可以把 tools 理解成一张“可用工具清单”。模型平时并不会自动读取时间、天气或数据库，只有当程序把这些函数定义放进上下文里，它才知道自己有哪些外部能力可以调用。
+                      你可以把 tools 理解成一张“可用工具清单”。模型平时并不会自动读取时间、天气或数据库，只有当程序把函数描述放进上下文里，它才知道自己有哪些外部能力可以调用。
                     </p>
                     <p className="compare-subtitle">当前这个示例里的 tools，可以这样拆开看：</p>
                     <div className="tool-guide-list">
@@ -1707,7 +1655,7 @@ function App() {
                   </article>
                   <article className="compare-card compare-card-muted">
                     <span className="panel-label">不带 tools</span>
-                    <p className="compare-title">模型只能靠已有知识或安全兜底来回答</p>
+                    <p className="compare-title">模型没有“可调用说明书”，就只能直接回答或保守兜底</p>
                     <p>{currentFunctionPreset.withoutToolsOutput}</p>
                   </article>
                 </div>
@@ -1757,14 +1705,14 @@ function App() {
                     </div>
                     <div className="composer-footer">
                       <span className="signal-dot" />
-                      <span>模型不是凭空知道函数名，而是先在上下文里看到了可用 tools 清单。</span>
+                      <span>这一页到此为止都还是模型侧视角，还没有进入函数执行环节。</span>
                     </div>
                   </section>
 
                   <section className="stream-card" aria-live="polite">
                     <div className="stream-head">
                       <div>
-                        <span className="panel-label">函数调用流程</span>
+                        <span className="panel-label">模型输出</span>
                         <p className="stream-status">{functionPhaseLabel}</p>
                       </div>
                       <div className="stream-pulse" aria-hidden="true">
@@ -1776,8 +1724,8 @@ function App() {
 
                     <div className="stream-console">
                       <div className="stream-line">
-                        <span className="stream-key">function</span>
-                        <span className="stream-value">{currentFunctionPreset.functionName}</span>
+                        <span className="stream-key">mode</span>
+                        <span className="stream-value">function calling only</span>
                       </div>
 
                       {functionThinkEnabled ? (
@@ -1809,33 +1757,13 @@ function App() {
                       ) : null}
 
                       <div className="stream-line stream-line-live">
-                        <span className="stream-key">arguments</span>
+                        <span className="stream-key">tool_call</span>
                         <pre className="stream-output stream-output-json">
-                          {streamedFunctionArgs}
+                          {streamedFunctionCall}
                           {functionPhase === "calling" ? (
                             <span className="stream-caret" aria-hidden="true" />
                           ) : null}
                         </pre>
-                      </div>
-
-                      <div className="stream-line stream-line-live">
-                        <span className="stream-key">{currentFunctionPreset.resultLabel}</span>
-                        <pre className="stream-output stream-output-json">
-                          {streamedFunctionResult}
-                          {functionPhase === "result" ? (
-                            <span className="stream-caret" aria-hidden="true" />
-                          ) : null}
-                        </pre>
-                      </div>
-
-                      <div className="stream-line stream-line-live">
-                        <span className="stream-key">final</span>
-                        <p className="stream-output">
-                          {streamedFunctionOutput}
-                          {functionPhase === "answering" ? (
-                            <span className="stream-caret" aria-hidden="true" />
-                          ) : null}
-                        </p>
                       </div>
                     </div>
                   </section>
@@ -1849,7 +1777,7 @@ function App() {
                   <article className="insight-card">
                     <span className="panel-label">这一页的重点</span>
                     <p>
-                      function calling 的前提，是模型在上下文里先看到了可用 tools 的定义。没有这份清单，它根本不知道自己可以调用什么；有了以后，才会决定是否发起函数调用。
+                      function calling 的边界很明确：模型先看 tools 定义，再决定是否调用，并产出一段 JSON。至于真正执行函数、拿回结果，那已经是下一页 MCP 或宿主程序的工作。
                     </p>
                   </article>
                 </div>
@@ -1860,26 +1788,124 @@ function App() {
                   <p className="eyebrow">第五页</p>
                   <h1>MCP</h1>
                   <p>
-                    这一页先把一个常见误区拆开。Function Calling 讲的是“模型怎样决定调用工具”，MCP 讲的是“工具怎样被接进系统并暴露给模型”。
+                    这一页开始进入系统侧。MCP 不是让模型“更会调用”，而是把真实函数实现、tools 描述和执行流程封装进一个 server，让客户端能把模型的 function call 正确转发过去。
                   </p>
                 </div>
 
-                <div className="mcp-compare-grid">
-                  {mcpComparisons.map((item) => (
+                <div className="mcp-plain-grid">
+                  {mcpPlainFacts.map((item) => (
                     <article className="compare-card" key={item.title}>
-                      <span className="panel-label">{item.title}</span>
-                      <p className="compare-title">{item.title === "Function Calling" ? "模型侧调用格式" : "系统侧接入协议"}</p>
+                      <span className="panel-label">{item.label}</span>
+                      <p className="compare-title">{item.title}</p>
                       <p>{item.body}</p>
                     </article>
                   ))}
                 </div>
 
+                <div className="mcp-difference-card">
+                  <div className="system-intro-card">
+                    <span className="panel-label">一句话区别</span>
+                    <h2>Function Calling 解决“怎么调”，MCP 解决“怎么接”</h2>
+                    <p>
+                      模型先根据 tools 说明书，产出工具名和参数；客户端再根据 MCP 的接入关系，把这段调用 JSON 转发到真正的工具 server 去执行。
+                    </p>
+                  </div>
+
+                  <div className="mcp-difference-table" role="table" aria-label="Function Calling 与 MCP 对比">
+                    <div className="mcp-difference-row mcp-difference-head" role="row">
+                      <span role="columnheader">对比点</span>
+                      <span role="columnheader">Function Calling</span>
+                      <span role="columnheader">MCP</span>
+                    </div>
+                    {mcpDifferenceRows.map((item) => (
+                      <div className="mcp-difference-row" key={item.point} role="row">
+                        <span role="cell">{item.point}</span>
+                        <span role="cell">{item.functionCalling}</span>
+                        <span role="cell">{item.mcp}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="provider-grid">
+                  {mcpCoreParts.map((item) => (
+                    <article className="topic-card" key={item.title}>
+                      <span className="panel-label">{item.label}</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.body}</p>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="mcp-demo-shell">
+                  <section className="composer-card">
+                    <div className="composer-head">
+                      <span className="panel-label">server 视角</span>
+                    </div>
+                    <div className="function-context-body">
+                      <div className="function-context-block">
+                        <span className="function-context-label">用户问题</span>
+                        <p className="function-context-prompt">{mcpDemoScenario.userRequest}</p>
+                      </div>
+                      <div className="function-context-block">
+                        <span className="function-context-label">模型看到的 tools</span>
+                        <pre className="function-context-tools">{mcpDemoScenario.tools}</pre>
+                      </div>
+                      <div className="function-context-block">
+                        <span className="function-context-label">这一页新增的信息</span>
+                        <p className="function-context-help">
+                          到这里都还是 Function Calling 语境。MCP 这一页真正新增的是：这些 tools 背后连着一个 MCP server，而 server 里面有真实函数实现。
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="stream-card" aria-live="polite">
+                    <div className="stream-head">
+                      <div>
+                        <span className="panel-label">调用链路演示</span>
+                        <p className="stream-status">先发起 function call，再由 MCP 路由到真实工具</p>
+                      </div>
+                      <div className="stream-pulse" aria-hidden="true">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+
+                    <div className="stream-console">
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">tool call</span>
+                        <pre className="stream-output stream-output-json">{mcpDemoScenario.functionCall}</pre>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">client</span>
+                        <p className="stream-output">{mcpDemoScenario.clientAction}</p>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">mcp server</span>
+                        <p className="stream-output">{mcpDemoScenario.serverAction}</p>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">result</span>
+                        <pre className="stream-output stream-output-json">{mcpDemoScenario.serverResult}</pre>
+                      </div>
+
+                      <div className="stream-line stream-line-live">
+                        <span className="stream-key">final</span>
+                        <p className="stream-output">{mcpDemoScenario.finalAnswer}</p>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
                 <div className="system-intro-card">
-                  <span className="panel-label">一句话区别</span>
-                  <h2>Function Calling 解决“怎么调”，MCP 解决“怎么接”</h2>
-                  <p>
-                    模型先用 function/tool schema 表达“我要调用哪个工具”；而 MCP 负责把这些工具通过统一协议挂到客户端上，让客户端知道去哪个 server 执行。
-                  </p>
+                  <span className="panel-label">严谨一点</span>
+                  <h2>不是模型直接执行 MCP，而是客户端代为转发</h2>
+                  <p>{mcpClarifyNote}</p>
                 </div>
 
                 <div className="mcp-flow-grid">
@@ -1892,10 +1918,32 @@ function App() {
                   ))}
                 </div>
 
+                <div className="mcp-compare-grid">
+                  {mcpComparisons.map((item) => (
+                    <article className="compare-card compare-card-muted" key={item.title}>
+                      <span className="panel-label">{item.title}</span>
+                      <p className="compare-title">
+                        {item.title === "Function Calling" ? "模型侧调用格式" : "系统侧接入协议"}
+                      </p>
+                      <p>{item.body}</p>
+                    </article>
+                  ))}
+                </div>
+
                 <div className="provider-grid">
                   {mcpExamples.map((item) => (
                     <article className="topic-card" key={item.title}>
                       <span className="panel-label">MCP 示例</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.body}</p>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="provider-grid">
+                  {mcpMisconceptions.map((item) => (
+                    <article className="topic-card" key={item.title}>
+                      <span className="panel-label">常见误区</span>
                       <h3>{item.title}</h3>
                       <p>{item.body}</p>
                     </article>

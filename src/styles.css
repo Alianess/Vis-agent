@@ -379,8 +379,10 @@ code {
 .structured-inputs,
 .function-shell,
 .function-compare-grid,
+.mcp-plain-grid,
 .mcp-compare-grid,
 .mcp-flow-grid,
+.mcp-demo-shell,
 .search-shell,
 .provider-grid,
 .search-related-grid,
@@ -442,6 +444,11 @@ code {
   margin-top: 18px;
 }
 
+.mcp-plain-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 22px;
+}
+
 .mcp-compare-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 22px;
@@ -450,6 +457,11 @@ code {
 .mcp-flow-grid {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   margin-top: 20px;
+}
+
+.mcp-demo-shell {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  margin-top: 22px;
 }
 
 .provider-grid {
@@ -481,6 +493,7 @@ code {
 .search-summary-card,
 .search-item-card,
 .search-request-card,
+.mcp-difference-card,
 .mcp-step-card,
 .placeholder-panel {
   padding: 22px;
@@ -656,6 +669,55 @@ code {
   white-space: pre-wrap;
   color: var(--ink);
   line-height: 1.7;
+}
+
+.mcp-difference-card {
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 248, 252, 0.92));
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.mcp-difference-table {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.mcp-difference-row {
+  display: grid;
+  grid-template-columns: 180px repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(11, 18, 32, 0.04);
+}
+
+.mcp-difference-row span {
+  line-height: 1.7;
+}
+
+.mcp-difference-row span:first-child {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.mcp-difference-row span:not(:first-child) {
+  color: var(--muted);
+}
+
+.mcp-difference-head {
+  background: rgba(11, 18, 32, 0.08);
+}
+
+.mcp-difference-head span {
+  color: var(--ink) !important;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .mcp-step-card {
@@ -1314,8 +1376,10 @@ code {
   .structured-shell,
   .function-shell,
   .function-compare-grid,
+  .mcp-plain-grid,
   .mcp-compare-grid,
   .mcp-flow-grid,
+  .mcp-demo-shell,
   .search-shell,
   .provider-grid,
   .search-related-grid {
@@ -1347,6 +1411,10 @@ code {
   .think-switch {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .mcp-difference-row {
+    grid-template-columns: 1fr;
   }
 }
 

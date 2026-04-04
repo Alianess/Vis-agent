@@ -46,11 +46,70 @@ export const learningModules = [
 export const mcpComparisons = [
   {
     title: "Function Calling",
-    body: "它解决的是“模型如何表达自己要调用哪个工具”。重点是工具 schema、参数生成、函数返回值和后续回答。",
+    body: "它解决的是“模型如何表达自己要调用哪个工具”。重点是工具 schema、参数补全，以及模型产出的调用 JSON。",
   },
   {
     title: "MCP",
-    body: "它解决的是“工具如何被接进来并暴露给模型”。重点是客户端、MCP server、协议、工具清单和执行链路。",
+    body: "它解决的是“工具如何被接进来并暴露给客户端与模型”。重点是工具实现、tools 描述、MCP server、客户端路由和执行链路。",
+  },
+];
+
+export const mcpPlainFacts = [
+  {
+    label: "Function Calling 像什么",
+    title: "像模型举手说：我要用这个工具",
+    body: "它关心的是调用意图。模型会根据 tools 说明书，产出工具名和参数 JSON，但不会自己真的执行。",
+  },
+  {
+    label: "MCP 像什么",
+    title: "像把工具插到统一插座上",
+    body: "它关心的是接入方式。客户端知道这些工具属于哪个 server、该怎么连、该把调用转发给谁。",
+  },
+  {
+    label: "一句话结论",
+    title: "前者是“怎么调”，后者是“怎么接”",
+    body: "如果只看到工具调用 JSON，那是 function calling；如果在讲函数实现、server、协议、连接和执行，那多半是在讲 MCP。",
+  },
+];
+
+export const mcpDifferenceRows = [
+  {
+    point: "它先解决什么问题",
+    functionCalling: "模型如何表达“我要调用哪个工具”。",
+    mcp: "工具如何被统一接入，并被客户端发现。",
+  },
+  {
+    point: "最常出现在哪一层",
+    functionCalling: "模型输出层，常见表现是 tool call / arguments JSON。",
+    mcp: "系统接入层，常见表现是客户端连接某个 MCP server。",
+  },
+  {
+    point: "你最容易看到的东西",
+    functionCalling: "函数名、参数 schema、调用 JSON。",
+    mcp: "函数实现、tools 列表、server、协议、连接方式。",
+  },
+  {
+    point: "谁真的去执行工具",
+    functionCalling: "它自己不执行，只负责发起调用意图。",
+    mcp: "最终由 MCP server 背后的真实程序执行。",
+  },
+];
+
+export const mcpCoreParts = [
+  {
+    label: "真实函数实现",
+    title: "先有真的能力",
+    body: "比如 `search_web(query)`、`read_file(path)`、`get_time(timezone)`。这些是真正会运行的代码，通常写在 Python / Node 里。",
+  },
+  {
+    label: "tools 描述",
+    title: "再写给模型看的说明书",
+    body: "这里会描述工具名、作用、参数 schema。模型看到的不是函数源码，而是这份可调用说明。",
+  },
+  {
+    label: "MCP Server",
+    title: "最后由 server 把两者连起来",
+    body: "MCP server 一头暴露 tools，一头绑定真实函数实现。客户端把模型产出的 function call 发来后，它负责执行并返回结果。",
   },
 ];
 
@@ -82,6 +141,48 @@ export const mcpFlowSteps = [
   },
 ];
 
+export const mcpDemoScenario = {
+  userRequest: "帮我搜一下本周 AI 新闻，再挑 3 条最值得看的告诉我。",
+  tools: `[
+  {
+    "type": "function",
+    "name": "web_search",
+    "description": "搜索网页并返回结果列表",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": { "type": "string" },
+        "top_k": { "type": "integer" }
+      },
+      "required": ["query"]
+    }
+  }
+]`,
+  functionCall: `{
+  "name": "web_search",
+  "arguments": {
+    "query": "本周 AI 新闻",
+    "top_k": 5
+  }
+}`,
+  clientAction:
+    "客户端先看到模型产出了 function call JSON，再检查这个工具属于哪个接入源。这里它发现：`web_search` 挂在 Search MCP Server 上。",
+  serverAction:
+    "Search MCP Server 内部已经实现了搜索函数，也暴露了对应 tools 描述。它接住调用后，真正去请求搜索接口，再把结构化结果返回给客户端。",
+  serverResult: `{
+  "results": [
+    { "title": "本周 AI 动态 1", "snippet": "……", "url": "https://..." },
+    { "title": "本周 AI 动态 2", "snippet": "……", "url": "https://..." },
+    { "title": "本周 AI 动态 3", "snippet": "……", "url": "https://..." }
+  ]
+}`,
+  finalAnswer:
+    "模型读到搜索结果后，再整理成给用户看的中文总结。这时你看到的自然语言回答，已经是“调用工具之后”的第二步结果。",
+};
+
+export const mcpClarifyNote =
+  "更严谨地说，不是模型直接调用了 MCP server，而是模型先输出 function call，客户端再把它转发给 MCP server，server 执行后把结果回给客户端。";
+
 export const mcpExamples = [
   {
     title: "搜索 MCP",
@@ -94,6 +195,21 @@ export const mcpExamples = [
   {
     title: "本地文件 / 数据库 MCP",
     body: "把本地文件、SQLite、向量库、业务系统等都接成统一协议下的工具入口。",
+  },
+];
+
+export const mcpMisconceptions = [
+  {
+    title: "误区 1：看到函数 JSON，就以为这已经是 MCP",
+    body: "不一定。那往往只是模型发起 function call。只有当你开始讨论“这个工具从哪来、挂在哪个 server、客户端怎么连接”时，才进入 MCP 的语境。",
+  },
+  {
+    title: "误区 2：MCP 是模型自己会的能力",
+    body: "也不是。MCP 更像一层接线标准，本质上是在帮客户端和工具服务沟通。真正执行搜索、读文件、查数据库的，还是背后的程序。",
+  },
+  {
+    title: "误区 3：有了 MCP，就不需要 function calling",
+    body: "不是替代关系。模型通常还是要先用 function calling 表达调用意图；MCP 再把这个工具调用路由到正确的 server。",
   },
 ];
 
@@ -316,7 +432,7 @@ export const functionCallDemos = [
 }`,
     output:
       "明天上海大概率会有一阵小雨，气温大概在 16 到 22 度之间。最好带一把伞，尤其如果你白天要出门久一点，会更稳妥。",
-    note: "这里模型不是自己查天气，而是先把地点和日期变成函数参数，再用返回值生成自然语言回答。",
+    note: "这一页只看第一步：模型如何把“明天上海天气”变成一个函数调用 JSON。",
   },
   {
     id: "docs",
@@ -387,7 +503,7 @@ export const functionCallDemos = [
 }`,
     output:
       "这一节主要想讲两件事：第一，同一个问题既可以输出成一段给人看的自然语言，也可以输出成固定字段的 JSON；第二，只有字段稳定了，程序才更容易继续渲染、存储或传给下一个函数。",
-    note: "这就是很多产品里的“AI 助手查知识库”原型：模型负责决定查什么，函数负责真的去拿资料。",
+    note: "Function calling 的重点不是检索结果本身，而是模型先把“要查什么、传什么参数”表达清楚。",
   },
 ];
 
