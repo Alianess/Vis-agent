@@ -571,7 +571,7 @@ function App() {
   const [activeReactRound, setActiveReactRound] = useState(0);
   const [reactPlaybackComplete, setReactPlaybackComplete] = useState(false);
   const [reactPhase, setReactPhase] = useState<
-    "typing" | "thought" | "act" | "server" | "observe" | "answer" | "done"
+    "typing" | "thought" | "act" | "server" | "observe" | "loopback" | "answer" | "done"
   >("typing");
   const [activeSearchSource, setActiveSearchSource] = useState<SearchSourceId>(
     searchSourceDemos[0].id as SearchSourceId,
@@ -1099,6 +1099,19 @@ function App() {
           return;
         }
 
+        if (index < reactDemo.loops.length - 1) {
+          await sleep(180);
+          if (cancelled) {
+            return;
+          }
+
+          setReactPhase("loopback");
+          await sleep(520);
+          if (cancelled) {
+            return;
+          }
+        }
+
         await sleep(360);
         if (cancelled) {
           return;
@@ -1206,18 +1219,20 @@ function App() {
     reactPlaybackComplete && reactPhase === "done"
       ? "三轮已播放完成，点击下方轮次可切换查看"
       : reactPhase === "typing"
-      ? "正在接收用户问题"
-      : reactPhase === "thought"
-        ? `正在进行 ${reactDemo.loops[activeReactRound]?.label || ""} Thought`
-        : reactPhase === "act"
-          ? `正在进行 ${reactDemo.loops[activeReactRound]?.label || ""} Act`
-          : reactPhase === "server"
-            ? "MCP server 正在执行工具"
-            : reactPhase === "observe"
-              ? `正在读取 ${reactDemo.loops[activeReactRound]?.label || ""} Observation`
-              : reactPhase === "answer"
-                ? "正在整理最终回答"
-                : "循环完成";
+        ? "正在接收用户问题"
+        : reactPhase === "thought"
+          ? `正在进行 ${reactDemo.loops[activeReactRound]?.label || ""} Thought`
+          : reactPhase === "act"
+            ? `正在进行 ${reactDemo.loops[activeReactRound]?.label || ""} Act`
+            : reactPhase === "server"
+              ? "MCP server 正在执行工具"
+              : reactPhase === "observe"
+                ? `正在读取 ${reactDemo.loops[activeReactRound]?.label || ""} Observation`
+                : reactPhase === "loopback"
+                  ? "这一轮信息还不够，正在回到 Thought 开启下一轮"
+                  : reactPhase === "answer"
+                    ? "正在整理最终回答"
+                    : "循环完成";
 
   const replayReactDemo = () => {
     setReactRunSeed((value) => value + 1);
@@ -1235,10 +1250,27 @@ function App() {
     setTypedReactToolCall(loop.toolCall);
     setTypedReactServer(loop.serverAction);
     setTypedReactObservation(loop.observation);
-    setTypedReactAnswer(reactDemo.finalAnswer);
-    setReactPhase("done");
+    setTypedReactAnswer(roundIndex === reactDemo.loops.length - 1 ? reactDemo.finalAnswer : "");
+    setReactPhase(roundIndex === reactDemo.loops.length - 1 ? "done" : "loopback");
     setReactPlaybackComplete(true);
   };
+
+  const reactFlowStepIndex =
+    reactPhase === "typing"
+      ? 0
+      : reactPhase === "thought"
+        ? 1
+        : reactPhase === "act"
+          ? 2
+          : reactPhase === "server"
+            ? 3
+            : reactPhase === "observe" || reactPhase === "loopback"
+              ? 4
+              : 5;
+
+  const isReactFinalRound = activeReactRound === reactDemo.loops.length - 1;
+  const showReactFinal = isReactFinalRound && (typedReactAnswer || reactPhase === "answer" || reactPhase === "done");
+  const showReactLoopback = !isReactFinalRound && (reactPhase === "loopback" || reactPlaybackComplete);
 
   const runSearch = async (query = searchQuery, source = activeSearchSource) => {
     const trimmedQuery = query.trim();
@@ -2485,30 +2517,51 @@ function App() {
 
                     <div className="react-flow">
                       {[
-                        { key: "input", label: "用户问题", active: reactPhase === "typing" },
+                        { key: "input", label: "用户问题", index: 0 },
                         {
                           key: "thought",
                           label: "Thought",
-                          active: reactPhase === "thought",
+                          index: 1,
                         },
-                        { key: "act", label: "Act", active: reactPhase === "act" },
-                        { key: "server", label: "MCP Server", active: reactPhase === "server" },
+                        { key: "act", label: "Act", index: 2 },
+                        { key: "server", label: "MCP Server", index: 3 },
                         {
                           key: "observe",
                           label: "Observation",
-                          active: reactPhase === "observe",
+                          index: 4,
                         },
-                        { key: "answer", label: "最终回答", active: reactPhase === "answer" || reactPhase === "done" },
+                        { key: "answer", label: "最终回答", index: 5 },
                       ].map((node, index, list) => (
                         <div className="react-flow-node-wrap" key={node.key}>
-                          <div className={`react-flow-node ${node.active ? "is-active" : ""}`}>
+                          <div
+                            className={`react-flow-node ${
+                              node.index < reactFlowStepIndex ||
+                              (node.key === "answer" && reactPhase === "done" && isReactFinalRound)
+                                ? "is-complete"
+                                : ""
+                            } ${
+                              node.index === reactFlowStepIndex &&
+                              !(node.key === "answer" && !isReactFinalRound && reactPhase === "done")
+                                ? "is-active"
+                                : ""
+                            }`}
+                          >
                             <span>{node.label}</span>
                           </div>
                           {index < list.length - 1 ? (
-                            <div className={`react-flow-line ${node.active ? "is-live" : ""}`} />
+                            <div
+                              className={`react-flow-line ${
+                                node.index < reactFlowStepIndex ? "is-complete" : ""
+                              } ${node.index === reactFlowStepIndex ? "is-live" : ""}`}
+                            />
                           ) : null}
                         </div>
                       ))}
+                    </div>
+
+                    <div className={`react-loopback ${showReactLoopback ? "is-visible" : ""}`}>
+                      <div className={`react-loopback-line ${reactPhase === "loopback" ? "is-live" : ""}`} />
+                      <p className="react-loopback-text">Observation 还不够，回到 Thought 开启下一轮</p>
                     </div>
 
                     <div className="stream-console react-console">
@@ -2555,10 +2608,16 @@ function App() {
 
                       <div className="stream-line stream-line-live">
                         <span className="stream-key">final</span>
-                        <p className="stream-output">
-                          {typedReactAnswer}
-                          {reactPhase === "answer" ? <span className="stream-caret" aria-hidden="true" /> : null}
-                        </p>
+                        {showReactFinal ? (
+                          <p className="stream-output">
+                            {typedReactAnswer}
+                            {reactPhase === "answer" ? <span className="stream-caret" aria-hidden="true" /> : null}
+                          </p>
+                        ) : (
+                          <p className="stream-output stream-output-muted">
+                            这一轮还不会直接给最终答案，而是带着 Observation 回到 Thought，开始下一轮判断。
+                          </p>
+                        )}
                       </div>
                     </div>
                   </section>
