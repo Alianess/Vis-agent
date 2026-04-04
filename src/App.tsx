@@ -2098,23 +2098,15 @@ function App() {
                     </form>
 
                     <div className="search-chip-row">
-                      {[
-                        currentSearchSource.defaultQuery,
+                      {(
                         activeSearchSource === "wikipedia"
-                          ? "北京"
+                          ? [currentSearchSource.defaultQuery, "北京", "人工智能"]
                           : activeSearchSource === "github"
-                            ? "langchain"
+                            ? [currentSearchSource.defaultQuery, "langchain", "transformers"]
                             : activeSearchSource === "arxiv"
-                              ? "RAG"
-                              : "哈利波特",
-                        activeSearchSource === "wikipedia"
-                          ? "人工智能"
-                          : activeSearchSource === "github"
-                            ? "transformers"
-                            : activeSearchSource === "arxiv"
-                              ? "transformer"
-                              : "活着",
-                      ].map((example) => (
+                              ? [currentSearchSource.defaultQuery, "RAG", "transformer"]
+                              : [currentSearchSource.defaultQuery, "The Three-Body Problem", "The Hobbit"]
+                      ).map((example) => (
                         <button
                           className="search-chip"
                           key={example}

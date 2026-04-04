@@ -547,9 +547,10 @@ export const searchSourceDemos = [
   {
     id: "openlibrary",
     label: "Open Library",
-    defaultQuery: "三体",
+    defaultQuery: "Harry Potter",
     title: "图书搜索",
-    subtitle: "适合查书籍、作者和出版信息，能帮助用户理解“搜索源不同，结果世界也不同”。",
+    subtitle:
+      "适合查书籍、作者和出版信息。这个公开书目源对英文书名更稳定，教学示例也会优先用英文标题。",
   },
 ];
 
