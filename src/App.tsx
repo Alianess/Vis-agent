@@ -2555,8 +2555,8 @@ function App() {
                       </div>
                       <div
                         className={`react-cycle-line react-cycle-line-top-right ${
-                          reactFlowStepIndex > 1 ? "is-complete" : ""
-                        } ${reactPhase === "thought" ? "is-live" : ""}`}
+                          reactFlowStepIndex > 2 ? "is-complete" : ""
+                        } ${reactPhase === "act" ? "is-live" : ""}`}
                       />
                       <div className={`react-cycle-node react-cycle-node-act ${reactActState}`}>
                         <span>Act</span>
@@ -2579,11 +2579,18 @@ function App() {
                         <span>Observation</span>
                       </div>
 
-                      <div className={`react-cycle-loop ${showReactLoopback ? "is-visible" : ""}`}>
-                        <div className={`react-cycle-loop-line ${reactPhase === "loopback" ? "is-live" : ""}`} />
-                        <p className="react-cycle-loop-text">信息还不够，带着 Observation 回到 Thought 再想一轮</p>
-                      </div>
+                      <div
+                        className={`react-cycle-line react-cycle-line-left ${
+                          reactPhase === "answer" || reactPhase === "done" || reactPlaybackComplete
+                            ? "is-complete"
+                            : ""
+                        } ${reactPhase === "loopback" ? "is-live" : ""}`}
+                      />
                     </div>
+
+                    <p className={`react-cycle-loop-text ${showReactLoopback ? "is-visible" : ""}`}>
+                      信息还不够，带着 Observation 回到 Thought 再想一轮
+                    </p>
 
                     <div className={`react-final-stage ${showReactFinal ? "is-visible" : ""}`}>
                       <div className={`react-final-stage-line ${reactPhase === "answer" ? "is-live" : ""}`} />
