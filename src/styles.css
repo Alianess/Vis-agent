@@ -1322,12 +1322,12 @@ code {
 .react-cycle {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(132px, 1fr) 84px minmax(132px, 1fr) 84px minmax(132px, 1fr);
-  grid-template-rows: 116px 82px 116px;
+  grid-template-columns: minmax(112px, 1fr) 64px minmax(112px, 1fr) 64px minmax(112px, 1fr);
+  grid-template-rows: 96px 64px 96px;
   align-items: center;
   justify-items: center;
-  gap: 0 14px;
-  margin-top: 24px;
+  gap: 0 10px;
+  margin-top: 18px;
 }
 
 .react-cycle-node,
@@ -1336,14 +1336,14 @@ code {
   z-index: 2;
   display: grid;
   place-items: center;
-  width: min(100%, 156px);
-  min-height: 100px;
-  padding: 12px;
-  border-radius: 24px;
+  width: min(100%, 132px);
+  min-height: 78px;
+  padding: 10px;
+  border-radius: 20px;
   border: 1px solid rgba(167, 182, 221, 0.16);
   background: rgba(31, 42, 74, 0.92);
   color: rgba(219, 228, 255, 0.72);
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-align: center;
   transition:
@@ -1360,7 +1360,7 @@ code {
   border-color: rgba(160, 187, 255, 0.5);
   background: linear-gradient(180deg, rgba(76, 103, 176, 0.34), rgba(48, 67, 124, 0.3));
   color: #ffffff;
-  box-shadow: 0 0 0 8px rgba(102, 126, 208, 0.12);
+  box-shadow: 0 0 0 6px rgba(102, 126, 208, 0.12);
 }
 
 .react-cycle-node.is-complete {
@@ -1494,9 +1494,9 @@ code {
 }
 
 .react-cycle-loop-text {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   color: rgba(212, 223, 255, 0.7);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   opacity: 0.24;
   transition: opacity 180ms ease;
 }
@@ -1508,8 +1508,8 @@ code {
 .react-final-stage {
   display: grid;
   justify-items: center;
-  gap: 14px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 2px;
   opacity: 0.28;
   transition: opacity 180ms ease, transform 180ms ease;
 }
@@ -1520,7 +1520,7 @@ code {
 
 .react-final-stage-line {
   width: 2px;
-  height: 34px;
+  height: 24px;
 }
 
 .react-final-stage-line::before {
@@ -1528,8 +1528,8 @@ code {
 }
 
 .react-final-stage-node {
-  width: min(100%, 220px);
-  min-height: 86px;
+  width: min(100%, 188px);
+  min-height: 72px;
 }
 
 .react-console {
