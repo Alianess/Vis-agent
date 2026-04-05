@@ -2546,7 +2546,7 @@ function App() {
                         <span>用户问题</span>
                       </div>
                       <div
-                        className={`react-cycle-line react-cycle-line-top-left ${
+                        className={`react-cycle-link react-cycle-link-input-thought react-cycle-link-horizontal ${
                           reactFlowStepIndex > 0 ? "is-complete" : ""
                         } ${reactPhase === "typing" ? "is-live" : ""}`}
                       />
@@ -2554,8 +2554,14 @@ function App() {
                         <span>Thought</span>
                       </div>
                       <div
-                        className={`react-cycle-line react-cycle-line-top-right ${
-                          reactFlowStepIndex > 2 ? "is-complete" : ""
+                        className={`react-cycle-link react-cycle-link-thought-act react-cycle-link-horizontal ${
+                          reactPhase === "server" ||
+                          reactPhase === "observe" ||
+                          reactPhase === "loopback" ||
+                          reactPhase === "answer" ||
+                          reactPhase === "done"
+                            ? "is-complete"
+                            : ""
                         } ${reactPhase === "act" ? "is-live" : ""}`}
                       />
                       <div className={`react-cycle-node react-cycle-node-act ${reactActState}`}>
@@ -2563,29 +2569,35 @@ function App() {
                       </div>
 
                       <div
-                        className={`react-cycle-line react-cycle-line-down ${
-                          reactFlowStepIndex > 2 ? "is-complete" : ""
-                        } ${reactPhase === "act" ? "is-live" : ""}`}
-                      />
-                      <div className={`react-cycle-node react-cycle-node-server ${reactServerState}`}>
-                        <span>MCP Server</span>
-                      </div>
-                      <div
-                        className={`react-cycle-line react-cycle-line-bottom ${
-                          reactFlowStepIndex > 3 ? "is-complete" : ""
+                        className={`react-cycle-link react-cycle-link-act-server react-cycle-link-vertical ${
+                          reactPhase === "observe" ||
+                          reactPhase === "loopback" ||
+                          reactPhase === "answer" ||
+                          reactPhase === "done"
+                            ? "is-complete"
+                            : ""
                         } ${reactPhase === "server" ? "is-live" : ""}`}
+                      />
+                      <div
+                        className={`react-cycle-link react-cycle-link-observation-thought react-cycle-link-vertical ${
+                          showReactLoopback ? "is-complete" : ""
+                        } ${reactPhase === "loopback" ? "is-live" : ""}`}
                       />
                       <div className={`react-cycle-node react-cycle-node-observe ${reactObservationState}`}>
                         <span>Observation</span>
                       </div>
-
                       <div
-                        className={`react-cycle-line react-cycle-line-left ${
-                          reactPhase === "answer" || reactPhase === "done" || reactPlaybackComplete
+                        className={`react-cycle-link react-cycle-link-server-observation react-cycle-link-horizontal ${
+                          reactPhase === "loopback" ||
+                          reactPhase === "answer" ||
+                          reactPhase === "done"
                             ? "is-complete"
                             : ""
-                        } ${reactPhase === "loopback" ? "is-live" : ""}`}
+                        } ${reactPhase === "observe" ? "is-live" : ""}`}
                       />
+                      <div className={`react-cycle-node react-cycle-node-server ${reactServerState}`}>
+                        <span>MCP Server</span>
+                      </div>
                     </div>
 
                     <p className={`react-cycle-loop-text ${showReactLoopback ? "is-visible" : ""}`}>
