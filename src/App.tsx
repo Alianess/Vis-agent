@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AgentStudio from "./AgentStudio";
 import {
   apiCards,
   examplePanels,
@@ -25,8 +26,17 @@ import {
   structuredOutputDemo,
   systemPromptDemos,
 } from "./content";
+import {
+  architectureOverview,
+  browserBoundaryCards,
+  chapterScaffolds,
+  glossaryTerms,
+  roadmapPhases,
+  siteTracks,
+} from "./siteContent";
 
-type Route = "home" | "learn";
+type Route = "home" | "learn" | "studio" | "map" | "architecture" | "glossary";
+type ModuleId = (typeof learningModules)[number]["id"];
 
 type DuckDuckGoTopic = {
   FirstURL?: string;
@@ -114,7 +124,33 @@ type WikipediaPageResponse = {
 };
 
 function getRouteFromHash(hash: string): Route {
-  return hash === "#/learn" ? "learn" : "home";
+  if (hash === "#/map") {
+    return "map";
+  }
+
+  if (hash === "#/architecture") {
+    return "architecture";
+  }
+
+  if (hash === "#/glossary") {
+    return "glossary";
+  }
+
+  if (hash.startsWith("#/learn")) {
+    return "learn";
+  }
+
+  if (hash === "#/studio") {
+    return "studio";
+  }
+
+  return "home";
+}
+
+function getModuleFromHash(hash: string): ModuleId {
+  const segment = hash.split("/")[2];
+  const matched = learningModules.find((module) => module.id === segment);
+  return (matched?.id ?? learningModules[0].id) as ModuleId;
 }
 
 function flattenDuckDuckGoTopics(topics: DuckDuckGoTopic[] = []): SearchItem[] {
@@ -518,7 +554,7 @@ function rankSearchItems(query: string, items: SearchItem[], topK: number): Sear
 function App() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || "未配置";
   const [route, setRoute] = useState<Route>(getRouteFromHash(window.location.hash));
-  const [activeModule, setActiveModule] = useState("io");
+  const [activeModule, setActiveModule] = useState<ModuleId>(getModuleFromHash(window.location.hash));
   const [thinkEnabled, setThinkEnabled] = useState(true);
   const [runSeed, setRunSeed] = useState(0);
   const [typedInput, setTypedInput] = useState("");
@@ -591,7 +627,9 @@ function App() {
 
   useEffect(() => {
     const onHashChange = () => {
-      setRoute(getRouteFromHash(window.location.hash));
+      const hash = window.location.hash;
+      setRoute(getRouteFromHash(hash));
+      setActiveModule(getModuleFromHash(hash));
     };
 
     window.addEventListener("hashchange", onHashChange);
@@ -604,6 +642,9 @@ function App() {
     functionCallDemos.find((preset) => preset.id === activeFunctionPreset) ?? functionCallDemos[0];
   const currentSearchSource =
     searchSourceDemos.find((preset) => preset.id === activeSearchSource) ?? searchSourceDemos[0];
+  const currentModuleMeta =
+    learningModules.find((module) => module.id === activeModule) ?? learningModules[0];
+  const currentChapterScaffold = chapterScaffolds[activeModule];
 
   useEffect(() => {
     if (route !== "learn" || activeModule !== "io") {
@@ -1376,48 +1417,270 @@ function App() {
     setSearchRequestPreview("");
   }, [activeSearchSource, currentSearchSource.defaultQuery]);
 
+  if (route === "map") {
+    return (
+      <div className="learn-page">
+        <header className="learn-topbar">
+          <div className="learn-brand">
+            <span className="brand-mark" />
+            <div>
+              <p className="brand-title">学习地图</p>
+              <p className="brand-subtitle">先看到整条路线，再决定从哪一章开始学</p>
+            </div>
+          </div>
+          <div className="studio-topbar-actions">
+            <a className="back-link" href="#/architecture">
+              架构总览
+            </a>
+            <a className="back-link" href="#/glossary">
+              术语表
+            </a>
+            <a className="back-link" href="#/">
+              返回首页
+            </a>
+          </div>
+        </header>
+
+        <main className="main">
+          <section className="section">
+            <div className="section-heading">
+              <p className="eyebrow">Learning Map</p>
+              <h2>先从入门 7 章建立骨架，再一路往后走到更复杂的系统层。</h2>
+            </div>
+
+            <div className="topic-grid">
+              {learningModules.map((module, index) => (
+                <article className="topic-card" key={module.id}>
+                  <span className="topic-index">{String(index + 1).padStart(2, "0")}</span>
+                  <h3>{module.title}</h3>
+                  <p>{module.subtitle}</p>
+                  <a className="search-link" href={`#/learn/${module.id}`}>
+                    打开这一章
+                  </a>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="section">
+            <div className="section-heading">
+              <p className="eyebrow">What Comes Next</p>
+              <h2>后面章节再多，也尽量沿着同一条坡度往前加。</h2>
+            </div>
+
+            <div className="topic-grid">
+              {roadmapPhases.map((phase) => (
+                <article className="topic-card" key={phase.title}>
+                  <span className="topic-index">{phase.label}</span>
+                  <h3>{phase.title}</h3>
+                  <p>{phase.body}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (route === "architecture") {
+    return (
+      <div className="learn-page">
+        <header className="learn-topbar">
+          <div className="learn-brand">
+            <span className="brand-mark" />
+            <div>
+              <p className="brand-title">架构总览</p>
+              <p className="brand-subtitle">把 Prompt 到 Harness 串成一条连续的系统图</p>
+            </div>
+          </div>
+          <div className="studio-topbar-actions">
+            <a className="back-link" href="#/map">
+              学习地图
+            </a>
+            <a className="back-link" href="#/glossary">
+              术语表
+            </a>
+            <a className="back-link" href="#/">
+              返回首页
+            </a>
+          </div>
+        </header>
+
+        <main className="main">
+          <section className="section">
+            <div className="section-heading">
+              <p className="eyebrow">Architecture Overview</p>
+              <h2>这张图想回答的不是“哪个框架最强”，而是系统怎么一层层长出来。</h2>
+            </div>
+
+            <div className="architecture-flow">
+              {architectureOverview.map((item) => (
+                <article className="topic-card architecture-card" key={item.title}>
+                  <span className="topic-index">{item.label}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="section">
+            <div className="section-heading">
+              <p className="eyebrow">Reading Method</p>
+              <h2>你可以把这张总览图理解成三次升级。</h2>
+            </div>
+
+            <div className="api-grid">
+              <article className="api-card">
+                <h3>第一次升级</h3>
+                <p>从 prompt 到结构化输出：系统先学会稳定说话。</p>
+              </article>
+              <article className="api-card">
+                <h3>第二次升级</h3>
+                <p>从 function calling 到 MCP 和 ReAct：系统开始能接工具、会做事、会循环。</p>
+              </article>
+              <article className="api-card">
+                <h3>第三次升级</h3>
+                <p>从 memory / state 到 trace / eval / harness：系统开始能持续观察、比较和自我检查。</p>
+              </article>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (route === "glossary") {
+    return (
+      <div className="learn-page">
+        <header className="learn-topbar">
+          <div className="learn-brand">
+            <span className="brand-mark" />
+            <div>
+              <p className="brand-title">术语表</p>
+              <p className="brand-subtitle">后面概念会越来越多，先准备一个持续扩写的词典页</p>
+            </div>
+          </div>
+          <div className="studio-topbar-actions">
+            <a className="back-link" href="#/map">
+              学习地图
+            </a>
+            <a className="back-link" href="#/architecture">
+              架构总览
+            </a>
+            <a className="back-link" href="#/">
+              返回首页
+            </a>
+          </div>
+        </header>
+
+        <main className="main">
+          <section className="section">
+            <div className="section-heading">
+              <p className="eyebrow">Glossary</p>
+              <h2>先用一句人话抓住概念，再看它在系统里真正承担什么角色。</h2>
+            </div>
+
+            <div className="glossary-grid">
+              {glossaryTerms.map((item) => (
+                <article className="topic-card glossary-card" key={item.term}>
+                  <span className="panel-label">{item.term}</span>
+                  <h3>{item.plain}</h3>
+                  <p>{item.detail}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (route === "studio") {
+    return <AgentStudio />;
+  }
+
   if (route === "learn") {
     return (
       <div className="learn-page">
         <header className="learn-topbar">
-          <a className="back-link" href="#/">
-            返回展示页
-          </a>
           <div className="learn-brand">
             <span className="brand-mark" />
             <div>
               <p className="brand-title">学习区</p>
-              <p className="brand-subtitle">从输入输出开始，一页页往后学</p>
+              <p className="brand-subtitle">每章独立路由，一章一个页面地往后学</p>
             </div>
+          </div>
+          <div className="studio-topbar-actions">
+            <a className="back-link" href="#/map">
+              学习地图
+            </a>
+            <a className="back-link" href="#/architecture">
+              架构总览
+            </a>
+            <a className="back-link" href="#/glossary">
+              术语表
+            </a>
+            <a className="back-link" href="#/">
+              返回首页
+            </a>
           </div>
         </header>
 
         <main className="learn-shell">
           <aside className="workspace-sidebar" aria-label="模块导航">
             {learningModules.map((module) => (
-              <button
+              <a
                 className={`sidebar-item ${activeModule === module.id ? "is-active" : ""}`}
+                href={`#/learn/${module.id}`}
                 key={module.id}
-                onClick={() => setActiveModule(module.id)}
-                type="button"
               >
                 <span className="sidebar-title">{module.title}</span>
                 <span className="sidebar-subtitle">{module.subtitle}</span>
-              </button>
+              </a>
             ))}
           </aside>
 
           <section className="workspace-panel">
+            <div className="chapter-shell">
+              <div className="lesson-head">
+                <p className="eyebrow">独立章节</p>
+                <h1>{currentModuleMeta.title}</h1>
+                <p>{currentModuleMeta.subtitle}。这一页先按固定结构讲清概念，再往下看演示和展开内容。</p>
+              </div>
+
+              <div className="chapter-grid">
+                <article className="topic-card">
+                  <span className="panel-label">概念</span>
+                  <h3>这一章在讲什么</h3>
+                  <p>{currentChapterScaffold.concept}</p>
+                </article>
+                <article className="topic-card">
+                  <span className="panel-label">为什么需要</span>
+                  <h3>为什么要学这一层</h3>
+                  <p>{currentChapterScaffold.why}</p>
+                </article>
+                <article className="topic-card">
+                  <span className="panel-label">最小示例</span>
+                  <h3>先抓一个最小例子</h3>
+                  <p>{currentChapterScaffold.minimumExample}</p>
+                </article>
+                <article className="topic-card">
+                  <span className="panel-label">常见误区</span>
+                  <h3>这层最容易误会什么</h3>
+                  <p>{currentChapterScaffold.misconception}</p>
+                </article>
+                <article className="topic-card chapter-relation-card">
+                  <span className="panel-label">和上一层的关系</span>
+                  <h3>它是接在前一层后面的</h3>
+                  <p>{currentChapterScaffold.previousLayer}</p>
+                </article>
+              </div>
+            </div>
+
             {activeModule === "io" ? (
               <>
-                <div className="lesson-head">
-                  <p className="eyebrow">第一页</p>
-                  <h1>输入与输出</h1>
-                  <p>
-                    先只看最基础的一件事：你输入一句话，模型怎么一点点变成最终输出。别急着上工具，先把这一步看顺。
-                  </p>
-                </div>
-
                 <div className="lesson-toolbar">
                   <button className="replay-button" onClick={replayDemo} type="button">
                     重新播放
@@ -2741,9 +3004,9 @@ function App() {
           </div>
 
           <div className="nav-links">
-            <a href="#topics">入门目录</a>
-            <a href="#example">示例</a>
-            <a href="#api">API</a>
+            <a href="#/map">学习地图</a>
+            <a href="#/architecture">架构总览</a>
+            <a href="#/glossary">术语表</a>
           </div>
         </nav>
 
@@ -2755,19 +3018,19 @@ function App() {
         </div>
 
         <section className="hero-copy">
-          <p className="eyebrow">从 Prompt 到 ReAct</p>
-          <h1>先把 AI 入门部分，一次看明白。</h1>
+          <p className="eyebrow">从看懂，到动手，再到架构</p>
+          <h1>把 AI 入门和最小实战，放进同一个站里。</h1>
           <p className="hero-text">
-            提示词、系统提示词、输出、结构化输出、Function Calling、MCP、搜索、ReAct 循环。
-            先把这 7 个点讲透，再往后走。
+            课程区负责把 Prompt、System Prompt、Function Calling、MCP、搜索和 ReAct 讲清楚；
+            实战区负责让用户自己填 API，在浏览器里跑一个最小 Agent。
           </p>
 
           <div className="hero-actions">
             <a className="button button-primary" href="#/learn">
               开始学习
             </a>
-            <a className="button button-secondary" href="#example">
-              先看示例
+            <a className="button button-secondary" href="#/map">
+              先看学习地图
             </a>
           </div>
         </section>
@@ -2791,6 +3054,26 @@ function App() {
       </header>
 
       <main className="main">
+        <section className="section" id="tracks">
+          <div className="section-heading">
+            <p className="eyebrow">站点结构</p>
+            <h2>先把课程站骨架搭出来，再持续往里面加内容。</h2>
+          </div>
+
+          <div className="topic-grid">
+            {siteTracks.map((track) => (
+              <article className="topic-card" key={track.title}>
+                <span className="topic-index">{track.index}</span>
+                <h3>{track.title}</h3>
+                <p>{track.body}</p>
+                <a className="search-link" href={track.href}>
+                  {track.cta}
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section className="section" id="topics">
           <div className="section-heading">
             <p className="eyebrow">入门目录</p>
@@ -2826,8 +3109,8 @@ function App() {
 
         <section className="section" id="api">
           <div className="section-heading">
-            <p className="eyebrow">静态站也能接 API</p>
-            <h2>界面很轻，能力可以是真实的。</h2>
+            <p className="eyebrow">实战接线方式</p>
+            <h2>纯前端能做一部分真事，但边界要讲清楚。</h2>
           </div>
 
           <div className="api-grid">
@@ -2838,9 +3121,49 @@ function App() {
               </article>
             ))}
             <article className="api-card">
-              <h3>当前 API 地址</h3>
+              <h3>后端升级位</h3>
               <code>{apiBase}</code>
-              <p>通过 `VITE_API_BASE_URL` 注入，不把密钥写进前端。</p>
+              <p>如果以后要自己托管密钥、代理第三方服务或补后端能力，可以通过 `VITE_API_BASE_URL` 再往后接。</p>
+            </article>
+          </div>
+        </section>
+
+        <section className="section" id="roadmap">
+          <div className="section-heading">
+            <p className="eyebrow">长期路线</p>
+            <h2>后面内容再多，也尽量只沿着这四步往前长。</h2>
+          </div>
+
+          <div className="topic-grid">
+            {roadmapPhases.map((phase) => (
+              <article className="topic-card" key={phase.title}>
+                <span className="topic-index">{phase.label}</span>
+                <h3>{phase.title}</h3>
+                <p>{phase.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="section" id="boundary">
+          <div className="section-heading">
+            <p className="eyebrow">浏览器边界</p>
+            <h2>不是所有 Skill / MCP 都能在静态站里直接跑。</h2>
+          </div>
+
+          <div className="api-grid">
+            {browserBoundaryCards.map((card) => (
+              <article className="api-card" key={card.title}>
+                <h3>{card.title}</h3>
+                <p>{card.body}</p>
+              </article>
+            ))}
+            <article className="api-card">
+              <h3>下一步入口</h3>
+              <p>现在先做课程区和纯前端实验区。等你后面真的要讲远程 MCP、评测和 harness，再继续把实战链路加深。</p>
+              <a className="search-link" href="#/studio">
+                去实战区看看
+              </a>
             </article>
           </div>
         </section>

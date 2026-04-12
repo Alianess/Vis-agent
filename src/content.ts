@@ -556,12 +556,16 @@ export const searchSourceDemos = [
 
 export const apiCards = [
   {
-    title: "前端",
-    body: "GitHub Pages 托管静态页面，负责示例、讲解和可视化。",
+    title: "课程层",
+    body: "静态页面继续负责讲解、示例、可视化和知识路线，不需要用户先装一堆东西才能开始学。",
   },
   {
-    title: "后端",
-    body: "Python / FastAPI 单独部署，用来接 OpenAI、搜索和后续工具。",
+    title: "纯前端实战层",
+    body: "用户自己填写 OpenAI 兼容模型接口和密钥，浏览器直接请求模型，再配合少量浏览器工具跑一个最小 Agent。",
+  },
+  {
+    title: "后端升级层",
+    body: "当你后面要托管密钥、接私有工具、做更稳的代理或加评测系统时，再把后端接进来，而不是一开始就把结构做重。",
   },
 ];
 
