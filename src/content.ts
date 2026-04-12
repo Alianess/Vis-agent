@@ -556,16 +556,16 @@ export const searchSourceDemos = [
 
 export const apiCards = [
   {
-    title: "课程层",
-    body: "静态页面继续负责讲解、示例、可视化和知识路线，不需要用户先装一堆东西才能开始学。",
+    title: "先看懂",
+    body: "先用可视化和小例子把 Prompt、System Prompt、结构化输出、Function Calling、MCP、搜索和 ReAct 讲清楚。",
   },
   {
-    title: "纯前端实战层",
-    body: "用户自己填写 OpenAI 兼容模型接口和密钥，浏览器直接请求模型，再配合少量浏览器工具跑一个最小 Agent。",
+    title: "再动手",
+    body: "学完基础概念后，你可以直接在网页里填写模型接口，跑一个最小 Agent，看见“模型、工具、结果”怎样连起来。",
   },
   {
-    title: "后端升级层",
-    body: "当你后面要托管密钥、接私有工具、做更稳的代理或加评测系统时，再把后端接进来，而不是一开始就把结构做重。",
+    title: "再进阶",
+    body: "等你不再满足于单次调用，就继续往后学记忆、多步任务、评测和 harness，理解真实系统为什么会越来越像工程。",
   },
 ];
 

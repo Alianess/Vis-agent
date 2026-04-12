@@ -2,35 +2,35 @@ export const siteTracks = [
   {
     index: "01",
     title: "学习地图",
-    body: "先看到整条知识路线，再决定从哪一章开始学，避免内容一多就失去方向感。",
+    body: "如果你还分不清 Prompt、MCP、ReAct、RAG 这些词，先看这张图，知道自己要按什么顺序往下学。",
     href: "#/map",
     cta: "查看地图",
   },
   {
     index: "02",
     title: "独立章节",
-    body: "每章都是单独路由，并且都按“概念、为什么需要、最小示例、误区、和上一层关系”来展开。",
+    body: "每一章都先讲清楚这是什么、为什么需要、最小例子是什么，以及它和上一层概念怎么接上。",
     href: "#/learn/io",
     cta: "进入第一章",
   },
   {
     index: "03",
     title: "架构总览",
-    body: "用一张连续的系统图，把 Prompt、工具、MCP、ReAct、记忆、评测和 Harness 串起来。",
+    body: "等你学到后面时，这一页会帮你把 Prompt、工具、MCP、ReAct、记忆、评测和 Harness 串成一整条链。",
     href: "#/architecture",
     cta: "打开总览",
   },
   {
     index: "04",
     title: "术语表",
-    body: "后面名词会越来越多，所以要有一个持续扩写的词典页，让用户随时回来看。",
+    body: "后面术语会越来越多，这一页会一直用人话解释，避免你学到一半被名词压住。",
     href: "#/glossary",
     cta: "查看术语",
   },
   {
     index: "05",
     title: "实战区",
-    body: "允许用户自己填模型接口和密钥，在浏览器里跑一个最小 Agent，逐步从纯教学走向教学加练习。",
+    body: "当你不想只看讲解时，可以来这里自己填模型接口，在网页里亲手跑一个最小 Agent。",
     href: "#/studio",
     cta: "打开实验台",
   },
@@ -61,16 +61,16 @@ export const roadmapPhases = [
 
 export const browserBoundaryCards = [
   {
-    title: "浏览器里能直接做",
-    body: "OpenAI 兼容模型调用、公开 HTTP API、部分支持 CORS 的远程服务，以及本地浏览器能提供的时间、表单和轻量状态。",
+    title: "现在就能练的",
+    body: "模型调用、公开知识接口、本地时间和少量浏览器工具，这些已经足够让你第一次体验 Agent 是怎么工作的。",
   },
   {
-    title: "有条件才能做",
-    body: "Remote MCP 只有在服务支持浏览器访问、CORS 放行、鉴权方式适合前端、并且协议是 HTTP 方向时，纯静态站才有机会直连。",
+    title: "有条件再练的",
+    body: "像 Remote MCP 这种远程能力，要看服务本身是否允许浏览器访问。如果条件合适，后面可以继续接进来。",
   },
   {
-    title: "浏览器里不能做",
-    body: "Stdio 型 MCP、本地文件系统、隐藏服务器密钥、内网代理和需要你替用户保密的执行链路，纯前端都不该硬做。",
+    title: "先别硬上的",
+    body: "像 stdio、本地文件权限、隐藏服务器密钥这些事情，不适合直接塞进纯静态站。先把该学会的学会，再决定要不要上后端。",
   },
 ] as const;
 

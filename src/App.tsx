@@ -552,7 +552,6 @@ function rankSearchItems(query: string, items: SearchItem[], topK: number): Sear
 }
 
 function App() {
-  const apiBase = import.meta.env.VITE_API_BASE_URL || "未配置";
   const [route, setRoute] = useState<Route>(getRouteFromHash(window.location.hash));
   const [activeModule, setActiveModule] = useState<ModuleId>(getModuleFromHash(window.location.hash));
   const [thinkEnabled, setThinkEnabled] = useState(true);
@@ -1425,7 +1424,7 @@ function App() {
             <span className="brand-mark" />
             <div>
               <p className="brand-title">学习地图</p>
-              <p className="brand-subtitle">先看到整条路线，再决定从哪一章开始学</p>
+              <p className="brand-subtitle">帮你先看清这一路会学到什么，再决定从哪开始</p>
             </div>
           </div>
           <div className="studio-topbar-actions">
@@ -1445,7 +1444,7 @@ function App() {
           <section className="section">
             <div className="section-heading">
               <p className="eyebrow">Learning Map</p>
-              <h2>先从入门 7 章建立骨架，再一路往后走到更复杂的系统层。</h2>
+              <h2>你会先学会最基础的 7 章，再慢慢走到更复杂的系统层。</h2>
             </div>
 
             <div className="topic-grid">
@@ -1465,7 +1464,7 @@ function App() {
           <section className="section">
             <div className="section-heading">
               <p className="eyebrow">What Comes Next</p>
-              <h2>后面章节再多，也尽量沿着同一条坡度往前加。</h2>
+              <h2>后面内容会变深，但你学到的始终是同一条主线在往前延伸。</h2>
             </div>
 
             <div className="topic-grid">
@@ -1491,7 +1490,7 @@ function App() {
             <span className="brand-mark" />
             <div>
               <p className="brand-title">架构总览</p>
-              <p className="brand-subtitle">把 Prompt 到 Harness 串成一条连续的系统图</p>
+              <p className="brand-subtitle">把你前面学过的点，连成一整张系统图</p>
             </div>
           </div>
           <div className="studio-topbar-actions">
@@ -1511,7 +1510,7 @@ function App() {
           <section className="section">
             <div className="section-heading">
               <p className="eyebrow">Architecture Overview</p>
-              <h2>这张图想回答的不是“哪个框架最强”，而是系统怎么一层层长出来。</h2>
+              <h2>这张图不是拿来比框架的，而是帮你看懂一个完整系统是怎么一层层长出来的。</h2>
             </div>
 
             <div className="architecture-flow">
@@ -1559,7 +1558,7 @@ function App() {
             <span className="brand-mark" />
             <div>
               <p className="brand-title">术语表</p>
-              <p className="brand-subtitle">后面概念会越来越多，先准备一个持续扩写的词典页</p>
+              <p className="brand-subtitle">名词会越来越多，所以这里一直用人话帮你兜底</p>
             </div>
           </div>
           <div className="studio-topbar-actions">
@@ -3018,11 +3017,11 @@ function App() {
         </div>
 
         <section className="hero-copy">
-          <p className="eyebrow">从看懂，到动手，再到架构</p>
-          <h1>把 AI 入门和最小实战，放进同一个站里。</h1>
+          <p className="eyebrow">给第一次系统学 Agent 的人</p>
+          <h1>看懂 AI 怎么工作，再亲手做出第一个最小 Agent。</h1>
           <p className="hero-text">
-            课程区负责把 Prompt、System Prompt、Function Calling、MCP、搜索和 ReAct 讲清楚；
-            实战区负责让用户自己填 API，在浏览器里跑一个最小 Agent。
+            你会先看懂 Prompt、System Prompt、结构化输出、Function Calling、MCP、搜索和 ReAct，
+            然后在网页里自己跑一次最小实战，真正把这些概念连起来。
           </p>
 
           <div className="hero-actions">
@@ -3056,8 +3055,8 @@ function App() {
       <main className="main">
         <section className="section" id="tracks">
           <div className="section-heading">
-            <p className="eyebrow">站点结构</p>
-            <h2>先把课程站骨架搭出来，再持续往里面加内容。</h2>
+            <p className="eyebrow">你可以怎么学</p>
+            <h2>如果你刚进来还没方向，可以按这几条路往下走。</h2>
           </div>
 
           <div className="topic-grid">
@@ -3109,8 +3108,8 @@ function App() {
 
         <section className="section" id="api">
           <div className="section-heading">
-            <p className="eyebrow">实战接线方式</p>
-            <h2>纯前端能做一部分真事，但边界要讲清楚。</h2>
+            <p className="eyebrow">你最终会得到什么</p>
+            <h2>这个站不只想让你知道概念，还想让你真正开始动手。</h2>
           </div>
 
           <div className="api-grid">
@@ -3121,17 +3120,16 @@ function App() {
               </article>
             ))}
             <article className="api-card">
-              <h3>后端升级位</h3>
-              <code>{apiBase}</code>
-              <p>如果以后要自己托管密钥、代理第三方服务或补后端能力，可以通过 `VITE_API_BASE_URL` 再往后接。</p>
+              <h3>你不需要先会一切</h3>
+              <p>这个站的目标不是让你第一天就掌握完整工程栈，而是让你先把关键概念看懂，再一点点过渡到真实系统。</p>
             </article>
           </div>
         </section>
 
         <section className="section" id="roadmap">
           <div className="section-heading">
-            <p className="eyebrow">长期路线</p>
-            <h2>后面内容再多，也尽量只沿着这四步往前长。</h2>
+            <p className="eyebrow">学习坡度</p>
+            <h2>后面内容会越来越深，但你始终只是在沿着这条路往前走。</h2>
           </div>
 
           <div className="topic-grid">
@@ -3147,8 +3145,8 @@ function App() {
 
         <section className="section" id="boundary">
           <div className="section-heading">
-            <p className="eyebrow">浏览器边界</p>
-            <h2>不是所有 Skill / MCP 都能在静态站里直接跑。</h2>
+            <p className="eyebrow">实战边界</p>
+            <h2>哪些事情你现在就能练，哪些事情等后面再练。</h2>
           </div>
 
           <div className="api-grid">
@@ -3159,8 +3157,8 @@ function App() {
               </article>
             ))}
             <article className="api-card">
-              <h3>下一步入口</h3>
-              <p>现在先做课程区和纯前端实验区。等你后面真的要讲远程 MCP、评测和 harness，再继续把实战链路加深。</p>
+              <h3>准备好了就去实战</h3>
+              <p>如果你已经不想只看解释，可以直接去实验区，自己把模型和工具跑起来，感受一次最小 Agent 闭环。</p>
               <a className="search-link" href="#/studio">
                 去实战区看看
               </a>
