@@ -377,7 +377,7 @@ async function requestChatCompletion(config: StudioConfig, messages: StudioMessa
 
 function AgentStudio() {
   const [config, setConfig] = useState<StudioConfig>(readInitialConfig);
-  const [prompt, setPrompt] = useState(promptExamples[0]);
+  const [prompt, setPrompt] = useState<string>(promptExamples[0]);
   const [status, setStatus] = useState<"idle" | "running" | "done" | "error">("idle");
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
