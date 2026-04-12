@@ -36,7 +36,7 @@ import {
 } from "./siteContent";
 
 type Route = "home" | "learn" | "studio" | "map" | "architecture" | "glossary";
-type ModuleId = (typeof learningModules)[number]["id"];
+type ModuleId = "io" | "system" | "structured" | "function" | "mcp" | "search" | "react";
 
 type DuckDuckGoTopic = {
   FirstURL?: string;
